@@ -1,8 +1,17 @@
-// Deterministic AI Risk Engine — every input maps to the same score, every
-// time, and every point swing is backed by a named factor. Nothing here is
-// Math.random(): the "AI" in AI Risk Engine is the weighted, explainable
-// reasoning below, which is exactly what an LLM prompt (see src/lib/ai/)
-// narrates in natural language on top of.
+// AI Risk Engine — a deterministic, explainable rule-based score blended
+// with a real trained machine-learning model (see src/lib/ml-safety-model.ts
+// for the model itself, and /ml/safety_score_training.ipynb for how it was
+// trained: scikit-learn LogisticRegression, 6000 synthetic training
+// journeys, 80/20 train-test split, test accuracy 0.69 / recall 0.70).
+// The rule-based weights below stay as the transparent, always-correct
+// baseline (every point swing is backed by a named factor); the trained
+// model's predicted risk probability is blended in as an additional,
+// data-driven signal and surfaced as its own named reason when it swings
+// the score meaningfully. Blending rather than replacing keeps the score
+// stable and explainable even if the model's confidence is low on a given
+// input, and there is no Math.random() anywhere — the LLM prompt (see
+// src/lib/ai/) only narrates the final score in natural language.
+import { predictHighRiskProbability } from "@/lib/ml-safety-model";
 
 export interface RiskFactors {
   hour: number; // 0-23, local time
@@ -16,6 +25,7 @@ export interface RiskFactors {
   nearbyPoliceOrHospital: boolean;
   communityReportsNearby: number; // harassment/unsafe reports within 1km, last 7d
   isEscalated: boolean;
+  isWeekend?: boolean; // defaults to the current local date if omitted
 }
 
 export interface RiskReason {
@@ -99,6 +109,28 @@ export function computeSafetyScore(f: RiskFactors): RiskResult {
   if (f.isEscalated) {
     score -= 25;
     reasons.push({ label: "SOS escalation active", positive: false });
+  }
+
+  // Trained ML model signal (see src/lib/ml-safety-model.ts): blended in as
+  // a secondary, data-driven adjustment on top of the transparent rule
+  // score above, rather than replacing it outright.
+  const isWeekend = f.isWeekend ?? [0, 6].includes(new Date().getDay());
+  const mlRiskProbability = predictHighRiskProbability({
+    hour: f.hour,
+    distanceKm: f.totalDistanceMeters / 1000,
+    routeDeviationMeters: f.routeDeviationMeters,
+    unexpectedStopSeconds: f.unexpectedStopSeconds,
+    nearbySafeZoneCount: f.nearbySafeZoneCount,
+    nearbyPoliceOrHospital: f.nearbyPoliceOrHospital,
+    communityReportsNearby: f.communityReportsNearby,
+    isWeekend,
+  });
+  const mlAdjustment = Math.round((0.5 - mlRiskProbability) * 24); // ±12 pts max
+  score += mlAdjustment;
+  if (mlRiskProbability >= 0.6) {
+    reasons.push({ label: "AI model flags an elevated-risk pattern", positive: false });
+  } else if (mlRiskProbability <= 0.25) {
+    reasons.push({ label: "AI model confirms a low-risk pattern", positive: true });
   }
 
   score = Math.round(clamp(score, 4, 98));
