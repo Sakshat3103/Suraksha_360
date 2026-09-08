@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { Logo } from "@/components/shared/logo";
 import { Globe, MessageCircle, Link2 } from "lucide-react";
