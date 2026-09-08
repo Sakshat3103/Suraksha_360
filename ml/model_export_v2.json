@@ -1,0 +1,79 @@
+{
+  "features": [
+    "hour",
+    "distance_km",
+    "route_deviation_m",
+    "unexpected_stop_s",
+    "nearby_safe_zone_count",
+    "nearby_police_or_hospital",
+    "community_reports_nearby",
+    "is_weekend",
+    "historical_crime_index"
+  ],
+  "scaler_mean": [
+    11.395833,
+    4.1542,
+    59.607854,
+    20.090625,
+    2.227708,
+    0.447292,
+    0.782083,
+    0.279375,
+    0.533722
+  ],
+  "scaler_scale": [
+    6.911463,
+    2.210048,
+    59.444585,
+    20.375915,
+    1.484511,
+    0.497214,
+    0.877503,
+    0.448692,
+    0.256939
+  ],
+  "coefficients": [
+    -0.362146,
+    0.286763,
+    0.162859,
+    0.165346,
+    -0.493449,
+    -0.384396,
+    0.667586,
+    0.131773,
+    0.504559
+  ],
+  "intercept": -0.316169,
+  "metrics": {
+    "accuracy": 0.715,
+    "precision": 0.4133,
+    "recall": 0.7045,
+    "f1": 0.521,
+    "confusion_matrix": [
+      [
+        672,
+        264
+      ],
+      [
+        78,
+        186
+      ]
+    ]
+  },
+  "rf_metrics": {
+    "mae": 7.262,
+    "r2": 0.7961,
+    "feature_importances": {
+      "hour": 0.5927,
+      "distance_km": 0.0232,
+      "route_deviation_m": 0.0222,
+      "unexpected_stop_s": 0.0167,
+      "nearby_safe_zone_count": 0.0642,
+      "nearby_police_or_hospital": 0.0559,
+      "community_reports_nearby": 0.1486,
+      "is_weekend": 0.0029,
+      "historical_crime_index": 0.0736
+    }
+  },
+  "trained_on": "6000 simulated journeys with a REAL feature (historical_crime_index) derived from actual NCRB government data (district-wise crimes against women, 2001-2012); remaining per-journey behavior fields are simulated as no public dataset tracks individual-trip-level detail."
+}
