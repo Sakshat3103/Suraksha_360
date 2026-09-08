@@ -421,3 +421,24 @@ export function googleMapsDirectionsUrl(origin: GeoPoint, destination: GeoPoint,
   });
   return `https://www.google.com/maps/dir/?${params.toString()}`;
 }
+
+// Realistic average speeds (m/s) per travel mode, used to estimate journey
+// duration from distance. Needed because the free public OSRM demo server
+// (router.project-osrm.org) only actually serves car-profile routing —
+// requesting "foot"/other profiles still returns driving-speed timing, so
+// its `duration` field is never trustworthy for anything but a cab/car.
+// These are realistic urban-India average paces (accounting for traffic
+// lights, crossings, stops), not top speeds.
+export const MODE_AVERAGE_SPEED_MPS: Record<string, number> = {
+  walking: 1.3, // ~4.7 km/h brisk walking pace
+  scooty: 6.9, // ~25 km/h average with city traffic/signals
+  bus: 5.6, // ~20 km/h average including stops
+  school_bus: 5.6,
+  metro: 9.7, // ~35 km/h average including station dwell time
+  cab: 8.3, // ~30 km/h average city driving
+};
+
+export function estimateDurationSeconds(distanceMeters: number, mode: string): number {
+  const speed = MODE_AVERAGE_SPEED_MPS[mode] ?? MODE_AVERAGE_SPEED_MPS.cab;
+  return distanceMeters / speed;
+}

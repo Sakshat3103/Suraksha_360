@@ -25,6 +25,7 @@ import { useLiveLocation } from "@/hooks/use-live-location";
 import { useJourneyStore, type JourneyRoute, type TravelMode } from "@/store/use-journey-store";
 import { cn } from "@/lib/utils";
 import {
+  estimateDurationSeconds,
   fetchNearbyPlaces,
   fetchRoute,
   formatDistance,
@@ -146,8 +147,12 @@ export function StartJourneyDialog({
       if (cancelled) return;
 
       const distanceMeters = result?.distanceMeters ?? haversineMeters(origin, destination) * 1.3;
-      const durationSeconds =
-        result?.durationSeconds ?? distanceMeters / (mode === "walking" ? 1.3 : 8);
+      // Duration is always estimated from real distance + a per-mode average
+      // speed, never taken from the routing API's own duration field — the
+      // free OSRM demo server only actually times car/driving routes, so
+      // its "duration" for walking/bus/metro etc. is a driving-speed number
+      // that reads as unrealistically fast (e.g. 1.8km in ~3 minutes).
+      const durationSeconds = estimateDurationSeconds(distanceMeters, mode);
 
       setPath(result?.path);
       setRoute({
