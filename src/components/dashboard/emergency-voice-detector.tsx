@@ -2,12 +2,13 @@
 
 import * as React from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Mic, MicOff, ShieldAlert, Loader2, Hospital, Building2 } from "lucide-react";
+import { Mic, MicOff, ShieldAlert, Loader2, Hospital, Building2, Navigation2 } from "lucide-react";
 import { useSosStore } from "@/store/use-sos-store";
 import { useLiveLocation } from "@/hooks/use-live-location";
-import { fetchSafeZones, type SafeZone } from "@/lib/geo";
+import { fetchSafeZones, googleMapsDirectionsUrl, type SafeZone } from "@/lib/geo";
 import { useSpeechTranscript } from "@/lib/voice/use-speech-transcript";
 import { classifyEmergencyVoice, type EmergencyVoiceResult } from "@/lib/voice/emergency-voice-client";
+import { matchNearbyHelpCommand, type HelpCategory } from "@/lib/voice/nearby-help-commands";
 import { cn } from "@/lib/utils";
 
 const CONFIDENCE_THRESHOLD = 0.8;
@@ -21,6 +22,19 @@ const CATEGORY_LABEL: Record<EmergencyVoiceResult["category"], string> = {
   accident: "Accident",
   unknown: "Unknown",
 };
+
+const HELP_CATEGORY_LABEL: Record<HelpCategory, string> = {
+  police: "police station",
+  hospital: "hospital",
+};
+
+function speak(text: string) {
+  if (typeof window === "undefined" || !window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.rate = 1.02;
+  window.speechSynthesis.speak(utterance);
+}
 
 /**
  * AI Emergency Voice Detector — NOT a chatbot. Listens continuously (once
@@ -48,6 +62,9 @@ export function EmergencyVoiceDetector() {
   });
   const [recording, setRecording] = React.useState(false);
   const mediaRecorderRef = React.useRef<MediaRecorder | null>(null);
+  const [pendingHelpRequest, setPendingHelpRequest] = React.useState<HelpCategory | null>(null);
+  const [helpResult, setHelpResult] = React.useState<{ category: HelpCategory; zone: SafeZone } | null>(null);
+  const [findingHelp, setFindingHelp] = React.useState(false);
 
   const startRecording = React.useCallback(() => {
     if (!navigator.mediaDevices?.getUserMedia) return;
@@ -82,11 +99,26 @@ export function EmergencyVoiceDetector() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sosStatus]);
 
-  // Classify each finalized sentence as it lands.
+  // Handle each finalized sentence: a "take me to the nearest police
+  // station/hospital" command is resolved locally and instantly, without
+  // spending a Gemini call meant for danger classification.
   React.useEffect(() => {
     if (!finalTranscript) return;
+    const helpCategory = matchNearbyHelpCommand(finalTranscript);
+    if (helpCategory) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- responding to the just-recognized navigation command
+      setHelpResult(null);
+      setPendingHelpRequest(helpCategory);
+       
+      setFindingHelp(true);
+      speak(`Finding the nearest ${HELP_CATEGORY_LABEL[helpCategory]} for you.`);
+      getOnce();
+      clearFinalTranscript();
+      return;
+    }
+
     let cancelled = false;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- kicking off the async classification triggered by a new transcript
+     
     setClassifying(true);
     classifyEmergencyVoice(finalTranscript).then((result) => {
       if (cancelled) return;
@@ -102,6 +134,33 @@ export function EmergencyVoiceDetector() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [finalTranscript]);
+
+  // Once a fresh position lands for a pending "take me to..." command,
+  // find the nearest matching zone, speak a confirmation, and open
+  // directions — this is the actual "voice assistant" payoff.
+  React.useEffect(() => {
+    if (!pendingHelpRequest || !position) return;
+    let cancelled = false;
+    fetchSafeZones(position, 4000).then((zones) => {
+      if (cancelled) return;
+      const best = zones
+        .filter((z) => z.category === pendingHelpRequest)
+        .sort((a, b) => a.distanceMeters - b.distanceMeters)[0];
+      setFindingHelp(false);
+      setPendingHelpRequest(null);
+      if (best) {
+        setHelpResult({ category: pendingHelpRequest, zone: best });
+        speak(`${best.label} is the nearest ${HELP_CATEGORY_LABEL[pendingHelpRequest]}, about ${Math.round(best.distanceMeters)} meters away. Opening directions now.`);
+        window.open(googleMapsDirectionsUrl(position, { lat: best.lat, lng: best.lng }, "walking"), "_blank", "noreferrer");
+      } else {
+        speak(`I couldn't find a nearby ${HELP_CATEGORY_LABEL[pendingHelpRequest]}. Please call 112 for immediate help.`);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingHelpRequest, position?.lat, position?.lng]);
 
   React.useEffect(() => {
     if (!position) return;
@@ -187,8 +246,37 @@ export function EmergencyVoiceDetector() {
                 </p>
               )}
             </div>
-            {lastResult && !lastResult.emergency && (
+            {lastResult && !lastResult.emergency && !findingHelp && !helpResult && (
               <p className="text-[11px] text-muted-foreground">No danger detected in last phrase.</p>
+            )}
+            {findingHelp && (
+              <p className="flex items-center gap-1.5 text-xs text-brand-blue">
+                <Loader2 className="size-3.5 animate-spin" /> Finding the nearest help point…
+              </p>
+            )}
+            {helpResult && (
+              <div className="flex flex-col gap-1.5 rounded-xl border border-brand-emerald/30 bg-brand-emerald/5 p-2.5">
+                <p className="flex items-center gap-1.5 text-xs font-semibold text-brand-emerald">
+                  {helpResult.category === "police" ? (
+                    <Building2 className="size-3.5" />
+                  ) : (
+                    <Hospital className="size-3.5" />
+                  )}
+                  Nearest {HELP_CATEGORY_LABEL[helpResult.category]}
+                </p>
+                <p className="text-sm font-medium">
+                  {helpResult.zone.label}{" "}
+                  <span className="font-normal text-muted-foreground">· {Math.round(helpResult.zone.distanceMeters)}m away</span>
+                </p>
+                <a
+                  href={position ? googleMapsDirectionsUrl(position, { lat: helpResult.zone.lat, lng: helpResult.zone.lng }, "walking") : "#"}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center justify-center gap-1.5 rounded-full border border-brand-emerald/40 bg-brand-emerald/10 px-3 py-1.5 text-xs font-medium text-brand-emerald hover:bg-brand-emerald/20"
+                >
+                  <Navigation2 className="size-3.5" /> Open directions
+                </a>
+              </div>
             )}
           </motion.div>
         )}
