@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { ChevronRight, MapPinned, ShieldAlert, Users2 } from "lucide-react";
 import { SectionHeading } from "@/components/shared/section-heading";
 import { Badge } from "@/components/ui/badge";
+import { useT } from "@/lib/i18n/use-t";
 
 const routes = [
   { name: "Via MG Road", eta: "12 min", score: 92, tone: "safe" as const },
@@ -11,12 +12,13 @@ const routes = [
 ];
 
 export function ProductShowcase() {
+  const { t } = useT();
   return (
     <section id="product" className="relative mx-auto max-w-6xl px-4 py-24 sm:py-32">
       <SectionHeading
-        eyebrow="Inside the app"
-        title="One journey, three people watching."
-        description="The traveller, their trusted circle, and the control room all see the same journey unfold live — with only the access each of them needs."
+        eyebrow={t("landing.productEyebrow")}
+        title={t("landing.productTitle")}
+        description={t("landing.productDesc")}
         className="mb-16"
       />
 
@@ -31,10 +33,10 @@ export function ProductShowcase() {
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-muted-foreground">Good evening</p>
+              <p className="text-xs text-muted-foreground">{t("landing.goodEvening")}</p>
               <p className="text-lg font-semibold">Shreya S.</p>
             </div>
-            <Badge variant="success">Guardian online</Badge>
+            <Badge variant="success">{t("landing.guardianOnline")}</Badge>
           </div>
 
           <div className="mt-6 space-y-3">
@@ -61,7 +63,7 @@ export function ProductShowcase() {
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-semibold">{r.score}<span className="text-muted-foreground">/100</span></p>
-                  <p className="text-[10px] uppercase tracking-wide text-muted-foreground">safety score</p>
+                  <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{t("landing.safetyScore")}</p>
                 </div>
               </div>
             ))}
@@ -73,15 +75,15 @@ export function ProductShowcase() {
                 <ShieldAlert className="size-5" />
               </span>
               <div>
-                <p className="text-sm font-medium">Safety check in 4:30</p>
-                <p className="text-xs text-muted-foreground">Escalates automatically if unanswered</p>
+                <p className="text-sm font-medium">{t("landing.safetyCheckIn")}</p>
+                <p className="text-xs text-muted-foreground">{t("landing.escalatesAutomatically")}</p>
               </div>
             </div>
             <ChevronRight className="size-4 text-muted-foreground" />
           </div>
 
           <p className="mt-4 text-center text-[11px] text-muted-foreground">
-            tap phone back ×2 for silent SOS
+            {t("landing.tapForSilentSos")}
           </p>
         </motion.div>
 
@@ -96,18 +98,18 @@ export function ProductShowcase() {
           {[
             {
               icon: MapPinned,
-              title: "AI safe route recommendation",
-              body: "Every route is scored on lighting, crowd history, and time of day — not just distance and speed.",
+              title: t("landing.featureRouteTitle"),
+              body: t("landing.featureRouteBody"),
             },
             {
               icon: Users2,
-              title: "Trusted circle, time-boxed",
-              body: "Guardians see your live journey only while it's active — automatically revoked the moment you're safe.",
+              title: t("landing.featureCircleTitle"),
+              body: t("landing.featureCircleBody"),
             },
             {
               icon: ShieldAlert,
-              title: "Silent, gesture-based SOS",
-              body: "A double-tap or a quiet phrase escalates instantly — no need to unlock or even look at your phone.",
+              title: t("landing.featureSosTitle"),
+              body: t("landing.featureSosBody"),
             },
           ].map((f) => (
             <div key={f.title} className="glass flex gap-4 rounded-2xl p-5">

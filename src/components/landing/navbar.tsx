@@ -5,6 +5,8 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Menu } from "lucide-react";
 import { Logo } from "@/components/shared/logo";
+import { LanguageSwitcher } from "@/components/dashboard/language-switcher";
+import { useT } from "@/lib/i18n/use-t";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -14,15 +16,15 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 
-const links = [
-  { href: "#product", label: "Product" },
-  { href: "#features", label: "AI Safety" },
-  { href: "#stats", label: "Impact" },
-  { href: "#testimonials", label: "Stories" },
-];
-
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
+  const { t } = useT();
+  const links = [
+    { href: "#product", label: t("landing.navProduct") },
+    { href: "#features", label: t("landing.navAiSafety") },
+    { href: "#stats", label: t("landing.navImpact") },
+    { href: "#testimonials", label: t("landing.navStories") },
+  ];
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -61,11 +63,12 @@ export function Navbar() {
         </nav>
 
         <div className="hidden items-center gap-2 md:flex">
+          <LanguageSwitcher />
           <Button variant="ghost" size="sm" asChild>
-            <Link href="/login">Sign in</Link>
+            <Link href="/login">{t("landing.signIn")}</Link>
           </Button>
           <Button variant="glow" size="sm" asChild>
-            <Link href="/signup">Get started</Link>
+            <Link href="/signup">{t("landing.getStarted")}</Link>
           </Button>
         </div>
 
@@ -93,11 +96,12 @@ export function Navbar() {
               ))}
             </div>
             <div className="mt-auto flex flex-col gap-2 p-4">
+              <div className="flex justify-center pb-1"><LanguageSwitcher /></div>
               <Button variant="outline" asChild>
-                <Link href="/login">Sign in</Link>
+                <Link href="/login">{t("landing.signIn")}</Link>
               </Button>
               <Button variant="glow" asChild>
-                <Link href="/signup">Get started</Link>
+                <Link href="/signup">{t("landing.getStarted")}</Link>
               </Button>
             </div>
           </SheetContent>

@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { ArrowRight, MapPin, ShieldCheck, Radio, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useT } from "@/lib/i18n/use-t";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 22 },
@@ -16,6 +17,7 @@ const fadeUp = {
 };
 
 export function Hero() {
+  const { t } = useT();
   return (
     <section className="relative overflow-hidden pt-40 pb-24 sm:pt-48 sm:pb-32">
       {/* Ambient glow orbs */}
@@ -27,7 +29,7 @@ export function Hero() {
         <motion.div variants={fadeUp} initial="hidden" animate="show" custom={0}>
           <Badge className="glass gap-1.5 border-foreground/10 bg-foreground/[0.04] px-3.5 py-1.5 text-xs font-medium text-foreground">
             <Sparkles className="size-3.5 text-brand-emerald" />
-            AI risk prediction · live in 40+ cities
+            {t("landing.heroBadge")}
           </Badge>
         </motion.div>
 
@@ -38,10 +40,10 @@ export function Hero() {
           custom={1}
           className="mt-7 text-balance text-4xl font-semibold tracking-tight sm:text-6xl md:text-7xl"
         >
-          Safety that predicts
+          {t("landing.heroTitleLine1")}
           <br />
           <span className="text-gradient bg-[length:200%_auto] animate-gradient-x">
-            the danger before it arrives.
+            {t("landing.heroTitleLine2")}
           </span>
         </motion.h1>
 
@@ -52,9 +54,7 @@ export function Hero() {
           custom={2}
           className="mt-6 max-w-2xl text-pretty text-base text-muted-foreground sm:text-lg"
         >
-          Suraksha360 is the AI-powered urban safety platform that scores every route before you
-          walk it, watches over your commute in real time, and closes the loop from silent SOS to
-          verified police response — in under 90 seconds.
+          {t("landing.heroDesc")}
         </motion.p>
 
         <motion.div
@@ -66,12 +66,12 @@ export function Hero() {
         >
           <Button size="lg" variant="glow" asChild>
             <Link href="/signup">
-              Start a safe journey
+              {t("landing.startSafeJourney")}
               <ArrowRight className="size-4" />
             </Link>
           </Button>
           <Button size="lg" variant="outline" asChild>
-            <Link href="#product">See it in action</Link>
+            <Link href="#product">{t("landing.seeItInAction")}</Link>
           </Button>
         </motion.div>
 
@@ -83,13 +83,13 @@ export function Hero() {
           className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-muted-foreground"
         >
           <span className="flex items-center gap-1.5">
-            <ShieldCheck className="size-3.5 text-brand-emerald" /> AES-256 encrypted evidence
+            <ShieldCheck className="size-3.5 text-brand-emerald" /> {t("landing.heroBadgeEncrypted")}
           </span>
           <span className="flex items-center gap-1.5">
-            <Radio className="size-3.5 text-brand-blue" /> 24/7 control room monitoring
+            <Radio className="size-3.5 text-brand-blue" /> {t("landing.heroBadgeControlRoom")}
           </span>
           <span className="flex items-center gap-1.5">
-            <MapPin className="size-3.5 text-brand-violet" /> Route + transit safety scoring
+            <MapPin className="size-3.5 text-brand-violet" /> {t("landing.heroBadgeRouteScoring")}
           </span>
         </motion.div>
       </div>

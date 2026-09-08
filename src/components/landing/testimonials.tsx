@@ -4,40 +4,21 @@ import { motion } from "framer-motion";
 import { Star } from "lucide-react";
 import { SectionHeading } from "@/components/shared/section-heading";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-
-const testimonials = [
-  {
-    name: "Ananya Mehta",
-    role: "Student, Jaipur",
-    quote:
-      "The route comparison alone changed how I commute after labs. Seeing why one path scores higher actually gets me to choose it.",
-  },
-  {
-    name: "Priya Sharma",
-    role: "Guardian, mother of two",
-    quote:
-      "I don't need to check in every hour anymore. I only hear from the app when it actually matters, and that's exactly right.",
-  },
-  {
-    name: "Insp. R. Verma",
-    role: "Women Safety Cell",
-    quote:
-      "The case packet gives us verified location and context immediately — that's the difference between minutes and seconds.",
-  },
-  {
-    name: "Meera Iyer",
-    role: "Product Manager, Bengaluru",
-    quote:
-      "Public transport scoring is the feature I didn't know I needed. It's the first app that treats my bus route as data.",
-  },
-];
+import { useT } from "@/lib/i18n/use-t";
 
 export function Testimonials() {
+  const { t } = useT();
+  const testimonials = [
+    { name: "Ananya Mehta", role: t("landing.t1Role"), quote: t("landing.t1Quote") },
+    { name: "Priya Sharma", role: t("landing.t2Role"), quote: t("landing.t2Quote") },
+    { name: "Insp. R. Verma", role: t("landing.t3Role"), quote: t("landing.t3Quote") },
+    { name: "Meera Iyer", role: t("landing.t4Role"), quote: t("landing.t4Quote") },
+  ];
   return (
     <section id="testimonials" className="relative mx-auto max-w-6xl px-4 py-24 sm:py-32">
       <SectionHeading
-        eyebrow="Trusted by commuters and control rooms"
-        title="Built with the people who use it every day."
+        eyebrow={t("landing.testimonialsEyebrow")}
+        title={t("landing.testimonialsTitle")}
         className="mb-16"
       />
 

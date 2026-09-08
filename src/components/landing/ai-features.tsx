@@ -11,52 +11,25 @@ import {
   Eye,
 } from "lucide-react";
 import { SectionHeading } from "@/components/shared/section-heading";
-
-const features = [
-  {
-    icon: Route,
-    title: "AI Risk Prediction",
-    body: "Every street segment is scored hour by hour from lighting, incident density, and crowd history.",
-  },
-  {
-    icon: ScanEye,
-    title: "Safe Route Recommendation",
-    body: "Routes ranked by a blend of safety and speed, with a plain-language reason for every score.",
-  },
-  {
-    icon: Mic,
-    title: "Voice Emergency Detection",
-    body: "On-device duress-phrase and scream detection — no need to touch your phone to trigger help.",
-  },
-  {
-    icon: Brain,
-    title: "Incident Classification",
-    body: "Sensor fusion auto-tags an alert as harassment, medical, or accident to route the right responder.",
-  },
-  {
-    icon: Users,
-    title: "Crowd Density Prediction",
-    body: "Privacy-preserving crowd estimation flags isolation risk and over-crowding on transit routes.",
-  },
-  {
-    icon: Bus,
-    title: "Public Transport Monitoring",
-    body: "Bus and metro lines scored at the route, coach, and time-slot level — the industry's first.",
-  },
-  {
-    icon: Eye,
-    title: "Explainable AI",
-    body: "Every score and escalation decision decomposes into factors a person — or a judge — can verify.",
-  },
-];
+import { useT } from "@/lib/i18n/use-t";
 
 export function AiFeatures() {
+  const { t } = useT();
+  const features = [
+    { icon: Route, title: t("landing.aiFeature1Title"), body: t("landing.aiFeature1Body") },
+    { icon: ScanEye, title: t("landing.aiFeature2Title"), body: t("landing.aiFeature2Body") },
+    { icon: Mic, title: t("landing.aiFeature3Title"), body: t("landing.aiFeature3Body") },
+    { icon: Brain, title: t("landing.aiFeature4Title"), body: t("landing.aiFeature4Body") },
+    { icon: Users, title: t("landing.aiFeature5Title"), body: t("landing.aiFeature5Body") },
+    { icon: Bus, title: t("landing.aiFeature6Title"), body: t("landing.aiFeature6Body") },
+    { icon: Eye, title: t("landing.aiFeature7Title"), body: t("landing.aiFeature7Body") },
+  ];
   return (
     <section id="features" className="relative mx-auto max-w-6xl px-4 py-24 sm:py-32">
       <SectionHeading
-        eyebrow="AI safety engine"
-        title="Seven models, one goal: a human reaches you fast."
-        description="Suraksha360 doesn't wait for a panic button. It predicts risk before you walk into it, and explains every decision it makes."
+        eyebrow={t("landing.aiEyebrow")}
+        title={t("landing.aiTitle")}
+        description={t("landing.aiDesc")}
         className="mb-16"
       />
 

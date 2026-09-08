@@ -2,12 +2,13 @@
 
 import { motion, useInView, useMotionValue, useSpring } from "framer-motion";
 import { useEffect, useRef } from "react";
+import { useT } from "@/lib/i18n/use-t";
 
-const stats = [
-  { value: 40, suffix: "+", label: "Cities piloting Suraksha360" },
-  { value: 90, suffix: "s", label: "Median time to control-room dispatch" },
-  { value: 2.4, suffix: "M", label: "Route safety scores computed" },
-  { value: 99.9, suffix: "%", label: "Alert delivery reliability" },
+const STAT_DEFS = [
+  { value: 40, suffix: "+", labelKey: "landing.statCities" },
+  { value: 90, suffix: "s", labelKey: "landing.statDispatch" },
+  { value: 2.4, suffix: "M", labelKey: "landing.statScores" },
+  { value: 99.9, suffix: "%", labelKey: "landing.statReliability" },
 ];
 
 function Counter({ value, suffix }: { value: number; suffix: string }) {
@@ -33,12 +34,14 @@ function Counter({ value, suffix }: { value: number; suffix: string }) {
 }
 
 export function Stats() {
+  const { t } = useT();
+  const stats = STAT_DEFS.map((s) => ({ ...s, label: t(s.labelKey) }));
   return (
     <section id="stats" className="relative mx-auto max-w-6xl px-4 py-20">
       <div className="glass-strong grid grid-cols-2 gap-8 rounded-3xl px-6 py-12 sm:grid-cols-4 sm:px-12">
         {stats.map((s, i) => (
           <motion.div
-            key={s.label}
+            key={s.labelKey}
             initial={{ opacity: 0, y: 16 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}

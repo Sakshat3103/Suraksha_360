@@ -38,7 +38,7 @@ export function LoginForm() {
   }
 
   return (
-    <AuthCard title="Welcome back" description="Sign in to continue your safety journey.">
+    <AuthCard title={t("auth.welcomeBack")} description={t("auth.continueJourneyDesc")}>
       <form action={handleSubmit} className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
           <Label htmlFor="email">{t("auth.email")}</Label>
@@ -49,7 +49,7 @@ export function LoginForm() {
           <div className="flex items-center justify-between">
             <Label htmlFor="password">{t("auth.password")}</Label>
             <Link href="/forgot-password" className="text-xs text-primary hover:underline">
-              Forgot password?
+              {t("auth.forgotPassword")}
             </Link>
           </div>
           <PasswordInput id="password" name="password" placeholder="••••••••" required />
@@ -57,7 +57,7 @@ export function LoginForm() {
 
         <label className="flex items-center gap-2 text-sm text-muted-foreground">
           <Checkbox name="remember" />
-          Remember me for 30 days
+          {t("auth.rememberMe")}
         </label>
 
         <Button type="submit" variant="glow" size="lg" disabled={isPending} className="mt-2">
@@ -68,24 +68,24 @@ export function LoginForm() {
 
       <div className="flex items-center gap-3">
         <Separator className="flex-1" />
-        <span className="text-xs text-muted-foreground">or</span>
+        <span className="text-xs text-muted-foreground">{t("auth.or")}</span>
         <Separator className="flex-1" />
       </div>
 
       <Button variant="outline" size="lg">
         <Mail className="size-4" />
-        Continue with a magic link
+        {t("auth.continueWithMagicLink")}
       </Button>
 
       <p className="text-center text-sm text-muted-foreground">
-        Don&apos;t have an account?{" "}
+        {t("auth.dontHaveAccount")}{" "}
         <Link href="/signup" className="font-medium text-primary hover:underline">
           {t("auth.createAccount")}
         </Link>
       </p>
 
       <p className="text-center text-xs text-muted-foreground">
-        Police / municipal safety desk?{" "}
+        {t("auth.policeDesk")}{" "}
         <Link href="/authority/login" className="font-medium text-primary hover:underline">
           Authority Portal
         </Link>
