@@ -12,6 +12,7 @@ import { useContacts } from "@/hooks/use-contacts";
 import { useLiveLocation } from "@/hooks/use-live-location";
 import { fetchSafeZones, googleMapsDirectionsUrl, type SafeZone } from "@/lib/geo";
 import { requestAI } from "@/lib/ai/client";
+import { sendSmsNotification } from "@/lib/sms/client";
 import { useT } from "@/lib/i18n/use-t";
 
 // Same priority a real emergency responder would use: an actual government
@@ -45,7 +46,7 @@ const ESCALATION_SECONDS = 10;
 // the tab is backgrounded or the phone is locked, which real silent-SOS
 // audio capture requires; a native app is the honest way to do that part.
 export function SosOverlay() {
-  const { status, trigger, cancel, escalate } = useSosStore();
+  const { status, trigger, triggeredAt, cancel, escalate } = useSosStore();
   const { t } = useT();
   const [secondsLeft, setSecondsLeft] = React.useState(ESCALATION_SECONDS);
   const route = useJourneyStore((s) => s.route);
@@ -53,6 +54,7 @@ export function SosOverlay() {
   const addPacket = useAuthorityFeedStore((s) => s.addPacket);
   const { data: contacts } = useContacts();
   const primaryContact = contacts?.find((c) => c.is_primary) ?? contacts?.[0];
+  const smsSentForTriggerRef = React.useRef<number | null>(null);
   const { position: liveOrigin, getOnce: getLiveLocationOnce } = useLiveLocation();
   const [nearestSafeHaven, setNearestSafeHaven] = React.useState<SafeZone | null>(null);
   const [safeHavenReason, setSafeHavenReason] = React.useState<string | null>(null);
@@ -103,15 +105,36 @@ export function SosOverlay() {
   }, [status, escalate]);
 
   React.useEffect(() => {
-    if (status === "escalated") {
-      toast.error("SOS escalated — your trusted circle has been alerted with your live location");
-      // Anonymous packet to the (mock) government control room — no name,
-      // phone, or contact details, only rough location + risk for triage.
-      addPacket({
-        areaLabel: destination ? `Near ${destination}` : "Unknown area",
-        lat: route?.originLat ?? 26.8408,
-        lng: route?.originLng ?? 75.5581,
-        riskScore: 92,
+    if (status !== "escalated") return;
+    if (smsSentForTriggerRef.current === triggeredAt) return; // already notified for this SOS
+    smsSentForTriggerRef.current = triggeredAt;
+
+    toast.error("SOS escalated — your trusted circle has been alerted with your live location");
+    // Anonymous packet to the (mock) government control room — no name,
+    // phone, or contact details, only rough location + risk for triage.
+    addPacket({
+      areaLabel: destination ? `Near ${destination}` : "Unknown area",
+      lat: route?.originLat ?? 26.8408,
+      lng: route?.originLng ?? 75.5581,
+      riskScore: 92,
+    });
+
+    // Real SMS to every trusted contact who opted into SMS alerts.
+    const smsContacts = (contacts ?? []).filter((c) => c.notify_sms);
+    if (smsContacts.length > 0) {
+      const locationUrl =
+        origin ? `https://www.google.com/maps?q=${origin.lat},${origin.lng}` : "location unavailable";
+      const message = `Suraksha360 SOS: I may be in danger${destination ? ` near ${destination}` : ""}. My live location: ${locationUrl}`;
+      Promise.all(smsContacts.map((c) => sendSmsNotification(c.phone, message))).then((results) => {
+        const anyMock = results.some((r) => r.usedMock);
+        const anyFailed = results.some((r) => !r.sent);
+        if (anyFailed) {
+          toast.error("Some SMS alerts failed to send — call your contacts directly if needed");
+        } else if (anyMock) {
+          toast.message("SMS alerts logged (Twilio not configured — no real SMS sent in this environment)");
+        } else {
+          toast.success(`SMS alert sent to ${smsContacts.length} contact${smsContacts.length > 1 ? "s" : ""}`);
+        }
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
