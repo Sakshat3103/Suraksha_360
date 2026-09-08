@@ -14,6 +14,7 @@ import { useAuthorityFeedStore } from "@/store/use-authority-feed-store";
 import { useJourneyStore } from "@/store/use-journey-store";
 import { MOCK_TRACKED_TRAVELLERS, STATUS_META, type TrackedTraveller } from "@/lib/mock-authority-data";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n/use-t";
 
 const MUJ_AREA_CENTER = { lat: 26.8408, lng: 75.5581 };
 
@@ -25,6 +26,7 @@ export default function AuthorityDashboardPage() {
   const { theme, setTheme } = useTheme();
   const { status: journeyStatus, route, destination } = useJourneyStore();
   const packets = useAuthorityFeedStore((s) => s.packets);
+  const { t } = useT();
 
   React.useEffect(() => {
     if (!isAuthed) router.replace("/authority/login");
@@ -59,8 +61,8 @@ export default function AuthorityDashboardPage() {
             <ShieldHalf className="size-5" />
           </span>
           <div>
-            <h1 className="text-lg font-semibold tracking-tight">Control Room — Suraksha360</h1>
-            <p className="text-xs text-muted-foreground">Signed in as {officerId}</p>
+            <h1 className="text-lg font-semibold tracking-tight">{t("authority.controlRoom")} — Suraksha360</h1>
+            <p className="text-xs text-muted-foreground">{t("authority.signedInAs")} {officerId}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -68,9 +70,9 @@ export default function AuthorityDashboardPage() {
             {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
           </Button>
           <Button variant="outline" className="gap-2" onClick={() => { logout(); router.push("/authority/login"); }}>
-            <LogOut className="size-4" /> Sign out
+            <LogOut className="size-4" /> {t("nav.signOut")}
           </Button>
-          <Link href="/dashboard"><Button variant="ghost">Traveller app</Button></Link>
+          <Link href="/dashboard"><Button variant="ghost">{t("authority.travellerApp")}</Button></Link>
         </div>
       </header>
 
@@ -78,13 +80,13 @@ export default function AuthorityDashboardPage() {
         <Card>
           <CardContent className="flex items-center gap-3 py-5">
             <span className="flex size-10 items-center justify-center rounded-xl bg-brand-blue/10 text-brand-blue"><Users className="size-4.5" /></span>
-            <div><p className="text-xl font-semibold">{travellers.length}</p><p className="text-xs text-muted-foreground">Being monitored nearby</p></div>
+            <div><p className="text-xl font-semibold">{travellers.length}</p><p className="text-xs text-muted-foreground">{t("authority.beingMonitored")}</p></div>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="flex items-center gap-3 py-5">
             <span className="flex size-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-500"><AlertTriangle className="size-4.5" /></span>
-            <div><p className="text-xl font-semibold">{flagged.length}</p><p className="text-xs text-muted-foreground">Flagged for attention</p></div>
+            <div><p className="text-xl font-semibold">{flagged.length}</p><p className="text-xs text-muted-foreground">{t("authority.flaggedForAttention")}</p></div>
           </CardContent>
         </Card>
         <Card>
@@ -99,9 +101,9 @@ export default function AuthorityDashboardPage() {
         <Card className="border-destructive/40">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base text-destructive">
-              <AlertTriangle className="size-4.5" /> Incoming anonymous SOS packets
+              <AlertTriangle className="size-4.5" /> {t("authority.incomingPackets")}
             </CardTitle>
-            <CardDescription>No names or contact info — location and risk level only, for immediate triage.</CardDescription>
+            <CardDescription>{t("authority.packetsDesc")}</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-2">
             {packets.map((p) => (
@@ -110,7 +112,7 @@ export default function AuthorityDashboardPage() {
                   <p className="text-sm font-medium">{p.areaLabel}</p>
                   <p className="text-xs text-muted-foreground">{p.lat.toFixed(4)}, {p.lng.toFixed(4)} · risk {p.riskScore}/100</p>
                 </div>
-                <Badge className="bg-destructive/15 text-destructive">Unresolved</Badge>
+                <Badge className="bg-destructive/15 text-destructive">{t("authority.unresolved")}</Badge>
               </div>
             ))}
           </CardContent>
@@ -119,12 +121,12 @@ export default function AuthorityDashboardPage() {
 
       <div className="grid gap-6 lg:grid-cols-[1.3fr_1fr]">
         <Card>
-          <CardHeader><CardTitle className="text-base">Area map</CardTitle><CardDescription>Anonymized IDs only — an officer never sees a raw name here.</CardDescription></CardHeader>
+          <CardHeader><CardTitle className="text-base">{t("authority.areaMap")}</CardTitle><CardDescription>{t("authority.anonymizedNote")}</CardDescription></CardHeader>
           <CardContent><AuthorityMapClient travellers={travellers} center={MUJ_AREA_CENTER} /></CardContent>
         </Card>
 
         <Card>
-          <CardHeader><CardTitle className="text-base">Active feed</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">{t("authority.activeFeed")}</CardTitle></CardHeader>
           <CardContent className="flex flex-col gap-2">
             {travellers.map((t) => (
               <div key={t.id} className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card/60 p-3">
@@ -139,7 +141,7 @@ export default function AuthorityDashboardPage() {
             ))}
             {flagged.length > 0 && (
               <Button variant="destructive" className="mt-2 gap-2">
-                <Radio className="size-4" /> Dispatch nearest patrol to flagged cases
+                <Radio className="size-4" /> {t("authority.dispatchPatrol")}
               </Button>
             )}
           </CardContent>

@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { requestAI } from "@/lib/ai/client";
 import type { RiskResult } from "@/lib/risk-engine";
 import { scoreBand } from "@/lib/risk-engine";
+import { useT } from "@/lib/i18n/use-t";
 
 const RADIUS = 42;
 const CIRC = 2 * Math.PI * RADIUS;
@@ -17,6 +18,7 @@ export function SafetyScoreCard({ risk, destination }: { risk: RiskResult; desti
   const band = scoreBand(score);
   const [explanation, setExplanation] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(false);
+  const { t } = useT();
 
   React.useEffect(() => {
     let cancelled = false;
@@ -43,9 +45,9 @@ export function SafetyScoreCard({ risk, destination }: { risk: RiskResult; desti
       <CardHeader className="flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2 text-base">
           <Sparkles className="size-4.5 text-brand-violet" />
-          AI Safety Score
+          {t("dashboard.aiSafetyScore")}
         </CardTitle>
-        <span className="text-[11px] text-muted-foreground">Confidence {confidence}%</span>
+        <span className="text-[11px] text-muted-foreground">{t("dashboard.confidence")} {confidence}%</span>
       </CardHeader>
       <CardContent className="flex flex-col gap-5 sm:flex-row sm:items-center">
         <div className="relative mx-auto flex size-32 shrink-0 items-center justify-center">
@@ -83,7 +85,7 @@ export function SafetyScoreCard({ risk, destination }: { risk: RiskResult; desti
 
         <div className="flex flex-1 flex-col gap-3">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground/70">Why?</p>
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground/70">{t("dashboard.why")}</p>
             <ul className="mt-1.5 flex flex-col gap-1">
               {reasons.map((r) => (
                 <li key={r.label} className="flex items-center gap-2 text-sm">
@@ -101,12 +103,12 @@ export function SafetyScoreCard({ risk, destination }: { risk: RiskResult; desti
           <div
             className={cn(
               "rounded-lg border px-3 py-2 text-xs leading-relaxed",
-              "border-white/10 bg-white/[0.03] text-muted-foreground"
+              "border-foreground/10 bg-foreground/[0.03] text-muted-foreground"
             )}
           >
             {loading ? (
               <span className="flex items-center gap-1.5">
-                <Sparkles className="size-3 animate-pulse text-brand-violet" /> AI is reasoning about your score…
+                <Sparkles className="size-3 animate-pulse text-brand-violet" /> {t("dashboard.aiReasoning")}
               </span>
             ) : (
               explanation

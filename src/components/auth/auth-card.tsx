@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { LanguageSwitcher } from "@/components/dashboard/language-switcher";
 
 export function AuthCard({
   title,
@@ -18,6 +19,9 @@ export function AuthCard({
       transition={{ duration: 0.5, ease: "easeOut" }}
       className="flex flex-col gap-6"
     >
+      <div className="flex justify-end">
+        <LanguageSwitcher />
+      </div>
       <div className="flex flex-col gap-1.5">
         <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
         <p className="text-sm text-muted-foreground">{description}</p>

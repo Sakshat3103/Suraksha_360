@@ -68,7 +68,7 @@ export function CommunityMap({ reports, center }: { reports: CommunityReport[]; 
     <div
       ref={containerRef}
       style={{ height: 280, width: "100%" }}
-      className="overflow-hidden rounded-xl border border-white/10"
+      className="overflow-hidden rounded-xl border border-foreground/10"
     />
   );
 }

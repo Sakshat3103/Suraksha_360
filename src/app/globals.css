@@ -25,6 +25,19 @@
   --border: oklch(0.9 0.01 260);
   --input: oklch(0.9 0.01 260);
   --ring: oklch(0.62 0.19 255);
+
+  /* brand — light-mode values (kept distinct from .dark below): darker /
+     more saturated than the dark-theme versions so brand-colored TEXT
+     stays readable on a white background, while still looking vivid as a
+     button/badge background under white text either way. Previously these
+     tokens were defined ONLY inside .dark, so every glass card, gradient
+     button and brand-colored icon rendered with an undefined color in
+     light mode — this was a real bug, not just a style preference. */
+  --brand-violet: oklch(0.5 0.2 288);
+  --brand-blue: oklch(0.5 0.17 255);
+  --brand-emerald: oklch(0.5 0.14 155);
+  --surface-glass: oklch(1 0 0 / 0.72);
+  --surface-glass-border: oklch(0.15 0.02 265 / 0.08);
 }
 
 .dark {

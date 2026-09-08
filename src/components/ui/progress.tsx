@@ -11,7 +11,7 @@ function Progress({
 }: React.ComponentProps<typeof ProgressPrimitive.Root>) {
   return (
     <ProgressPrimitive.Root
-      className={cn("bg-white/[0.06] relative h-2 w-full overflow-hidden rounded-full", className)}
+      className={cn("bg-foreground/[0.06] relative h-2 w-full overflow-hidden rounded-full", className)}
       {...props}
     >
       <ProgressPrimitive.Indicator

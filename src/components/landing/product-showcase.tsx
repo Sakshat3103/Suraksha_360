@@ -41,7 +41,7 @@ export function ProductShowcase() {
             {routes.map((r) => (
               <div
                 key={r.name}
-                className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.03] p-4"
+                className="flex items-center justify-between rounded-xl border border-foreground/10 bg-foreground/[0.03] p-4"
               >
                 <div className="flex items-center gap-3">
                   <span
@@ -67,7 +67,7 @@ export function ProductShowcase() {
             ))}
           </div>
 
-          <div className="mt-5 flex items-center justify-between rounded-xl bg-gradient-brand/10 border border-white/10 p-4">
+          <div className="mt-5 flex items-center justify-between rounded-xl bg-gradient-brand/10 border border-foreground/10 p-4">
             <div className="flex items-center gap-3">
               <span className="flex size-10 items-center justify-center rounded-lg bg-gradient-brand text-white">
                 <ShieldAlert className="size-5" />

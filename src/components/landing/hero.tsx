@@ -25,7 +25,7 @@ export function Hero() {
 
       <div className="relative mx-auto flex max-w-5xl flex-col items-center px-4 text-center">
         <motion.div variants={fadeUp} initial="hidden" animate="show" custom={0}>
-          <Badge className="glass gap-1.5 border-white/10 bg-white/[0.04] px-3.5 py-1.5 text-xs font-medium text-foreground">
+          <Badge className="glass gap-1.5 border-foreground/10 bg-foreground/[0.04] px-3.5 py-1.5 text-xs font-medium text-foreground">
             <Sparkles className="size-3.5 text-brand-emerald" />
             AI risk prediction · live in 40+ cities
           </Badge>

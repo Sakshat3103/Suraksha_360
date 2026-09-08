@@ -74,7 +74,7 @@ export function ContactDialog() {
             <Input id="email" name="email" type="email" placeholder="priya@example.com" />
           </div>
 
-          <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.03] p-3">
+          <div className="flex items-center justify-between rounded-xl border border-foreground/10 bg-foreground/[0.03] p-3">
             <div>
               <p className="text-sm font-medium">SMS alerts</p>
               <p className="text-xs text-muted-foreground">Notify by text on escalation</p>
@@ -82,7 +82,7 @@ export function ContactDialog() {
             <Switch checked={notifySms} onCheckedChange={setNotifySms} />
           </div>
 
-          <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.03] p-3">
+          <div className="flex items-center justify-between rounded-xl border border-foreground/10 bg-foreground/[0.03] p-3">
             <div>
               <p className="text-sm font-medium">Voice call</p>
               <p className="text-xs text-muted-foreground">Automated call on high-priority alerts</p>

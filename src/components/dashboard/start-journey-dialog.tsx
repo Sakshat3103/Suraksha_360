@@ -220,7 +220,7 @@ export function StartJourneyDialog({
                   "flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium transition-colors",
                   isLive
                     ? "bg-brand-emerald/15 text-brand-emerald"
-                    : "bg-white/[0.06] text-muted-foreground hover:text-foreground"
+                    : "bg-foreground/[0.06] text-muted-foreground hover:text-foreground"
                 )}
               >
                 <Radio className={cn("size-3", isLive && "animate-pulse")} />
@@ -251,7 +251,7 @@ export function StartJourneyDialog({
                           key={`${s.lat}-${s.lng}`}
                           type="button"
                           onClick={() => handleSelectPlace(s)}
-                          className="block w-full truncate px-3 py-2.5 text-left text-sm hover:bg-white/[0.08]"
+                          className="block w-full truncate px-3 py-2.5 text-left text-sm hover:bg-foreground/[0.08]"
                         >
                           {s.label}
                         </button>
@@ -291,7 +291,7 @@ export function StartJourneyDialog({
                         key={`${p.lat}-${p.lng}`}
                         type="button"
                         onClick={() => handleSelectPlace(p)}
-                        className="flex items-center justify-between rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-left text-sm hover:bg-white/[0.08]"
+                        className="flex items-center justify-between rounded-lg border border-foreground/10 bg-foreground/[0.03] px-3 py-2 text-left text-sm hover:bg-foreground/[0.08]"
                       >
                         <span className="flex min-w-0 flex-col">
                           <span className="truncate font-medium">{p.label}</span>

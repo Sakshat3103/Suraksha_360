@@ -35,9 +35,9 @@ function SheetContent({
         className={cn(
           "glass-strong fixed z-50 flex flex-col gap-4 shadow-2xl shadow-black/50 transition ease-in-out data-[state=closed]:duration-200 data-[state=open]:duration-300",
           side === "right" &&
-            "inset-y-0 right-0 h-full w-3/4 max-w-xs border-l border-white/10 data-[state=closed]:animate-out data-[state=closed]:slide-out-to-right data-[state=open]:animate-in data-[state=open]:slide-in-from-right",
+            "inset-y-0 right-0 h-full w-3/4 max-w-xs border-l border-foreground/10 data-[state=closed]:animate-out data-[state=closed]:slide-out-to-right data-[state=open]:animate-in data-[state=open]:slide-in-from-right",
           side === "left" &&
-            "inset-y-0 left-0 h-full w-3/4 max-w-xs border-r border-white/10 data-[state=closed]:animate-out data-[state=closed]:slide-out-to-left data-[state=open]:animate-in data-[state=open]:slide-in-from-left",
+            "inset-y-0 left-0 h-full w-3/4 max-w-xs border-r border-foreground/10 data-[state=closed]:animate-out data-[state=closed]:slide-out-to-left data-[state=open]:animate-in data-[state=open]:slide-in-from-left",
           className
         )}
         {...props}

@@ -48,7 +48,7 @@ export function ReportList({ reports }: { reports: CommunityReport[] }) {
         return (
           <Card key={r.id}>
             <CardContent className="flex gap-3 p-4">
-              <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-white/[0.06] text-amber-300">
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-foreground/[0.06] text-amber-300">
                 <Icon className="size-4" />
               </span>
               <div className="min-w-0 flex-1">

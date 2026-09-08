@@ -33,6 +33,7 @@ import {
 import { computeSafetyScore } from "@/lib/risk-engine";
 import { computeEmergencyLevel } from "@/lib/emergency-detector";
 import { toast } from "sonner";
+import { useT } from "@/lib/i18n/use-t";
 
 function formatCountdown(totalSeconds: number) {
   const m = Math.floor(totalSeconds / 60);
@@ -47,6 +48,7 @@ export function JourneyCard() {
   const addTimelineEvent = useTimelineStore((s) => s.addEvent);
   const resetTimeline = useTimelineStore((s) => s.reset);
   const communityReports = useCommunityStore((s) => s.reports);
+  const { t } = useT();
 
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [remaining, setRemaining] = React.useState(0);
@@ -204,7 +206,7 @@ export function JourneyCard() {
         <CardHeader className="flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-base">
             <MapPinned className="size-4.5 text-brand-blue" />
-            Safe Journey
+            {t("dashboard.safeJourney")}
           </CardTitle>
           <span
             className={
@@ -216,24 +218,23 @@ export function JourneyCard() {
                   : "bg-brand-emerald/15 text-brand-emerald animate-pulse-ring")
             }
           >
-            {status === "idle" ? "Not active" : status === "escalated" ? "Escalated" : "Active"}
+            {status === "idle" ? t("dashboard.notActive") : status === "escalated" ? t("dashboard.escalatedStatus") : t("dashboard.activeStatus")}
           </span>
         </CardHeader>
         <CardContent className="flex flex-col gap-5">
           {status === "idle" ? (
             <>
               <p className="text-sm text-muted-foreground">
-                Start a journey and Suraksha360&apos;s AI Risk Engine scores your route in real time, watches your ETA,
-                and keeps your circle informed automatically.
+                {t("dashboard.startJourneyDesc")}
               </p>
               <Button variant="glow" size="lg" onClick={() => setDialogOpen(true)}>
-                Start a Safe Journey
+                {t("dashboard.startAJourney")}
               </Button>
             </>
           ) : (
             <>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Destination</span>
+                <span className="text-muted-foreground">{t("guardian.destination")}</span>
                 <span className="max-w-[65%] truncate text-right font-medium">
                   {reroute ? `${reroute.label} (safe zone)` : destination}
                 </span>
@@ -242,7 +243,7 @@ export function JourneyCard() {
               {reroute && (
                 <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
                   <AlertOctagon className="size-3.5 shrink-0" />
-                  Rerouted to the nearest verified safe zone — original destination paused.
+                  {t("dashboard.rerouteNotice")}
                 </div>
               )}
 
@@ -267,19 +268,19 @@ export function JourneyCard() {
                   rel="noopener noreferrer"
                   className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
                 >
-                  Open in Google Maps <ExternalLink className="size-3" />
+                  {t("dashboard.openInGoogleMaps")} <ExternalLink className="size-3" />
                 </a>
               )}
 
               <div className="flex items-center gap-2 text-sm">
                 <TimerReset className="size-4 text-amber-300" />
-                <span className="text-muted-foreground">Safety check in</span>
+                <span className="text-muted-foreground">{t("dashboard.safetyCheckIn")}</span>
                 <span className="ml-auto font-medium tabular-nums">{formatCountdown(remaining)}</span>
               </div>
               <Progress value={progressValue} />
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <Users2 className="size-3.5 text-brand-emerald" />
-                Guardians watching this journey
+                {t("dashboard.guardiansWatching")}
               </div>
 
               <Button
@@ -290,10 +291,10 @@ export function JourneyCard() {
               >
                 <AlertOctagon className="size-4" />
                 {findingSafeZone
-                  ? "Finding a safe place…"
+                  ? t("dashboard.findingSafePlace")
                   : reroute
-                    ? "Rerouted to safe zone"
-                    : "I'm being followed"}
+                    ? t("dashboard.reroutedSafeZone")
+                    : t("dashboard.imBeingFollowed")}
               </Button>
 
               <div className="flex gap-2">
@@ -305,7 +306,7 @@ export function JourneyCard() {
                     endJourney();
                   }}
                 >
-                  <ShieldCheck className="size-4" /> Reached safely
+                  <ShieldCheck className="size-4" /> {t("dashboard.reachedSafely")}
                 </Button>
                 <Button
                   variant="outline"
@@ -315,7 +316,7 @@ export function JourneyCard() {
                     endJourney();
                   }}
                 >
-                  End journey
+                  {t("dashboard.endJourney")}
                 </Button>
               </div>
             </>
@@ -325,9 +326,9 @@ export function JourneyCard() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="mx-6 mt-1 rounded-xl border border-white/10 bg-white/[0.03] p-3 text-center text-xs text-muted-foreground"
+            className="mx-6 mt-1 rounded-xl border border-foreground/10 bg-foreground/[0.03] p-3 text-center text-xs text-muted-foreground"
           >
-            Double-tap anywhere or shake your phone to trigger a silent SOS
+            {t("dashboard.doubleTapSos")}
           </motion.div>
         )}
 

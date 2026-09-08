@@ -10,20 +10,22 @@ import Link from "next/link";
 import { useContacts } from "@/hooks/use-contacts";
 import { getInitials } from "@/lib/utils";
 import { useJourneyStore } from "@/store/use-journey-store";
+import { useT } from "@/lib/i18n/use-t";
 
 export function TrustedCircleCard() {
   const { data: contacts, isLoading } = useContacts();
   const journeyStatus = useJourneyStore((s) => s.status);
   const hasActiveJourney = journeyStatus !== "idle";
+  const { t } = useT();
 
   return (
     <Card>
       <CardHeader className="flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2 text-base">
           <Users2 className="size-4.5 text-brand-violet" />
-          Trusted Circle
+          {t("dashboard.trustedCircle")}
         </CardTitle>
-        <Badge variant="secondary">{contacts?.length ?? 0} members</Badge>
+        <Badge variant="secondary">{contacts?.length ?? 0} {t("dashboard.members")}</Badge>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
         {isLoading ? (
@@ -33,16 +35,16 @@ export function TrustedCircleCard() {
           </>
         ) : !contacts || contacts.length === 0 ? (
           <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-white/15 p-6 text-center">
-            <p className="text-sm font-medium">No trusted contacts yet</p>
+            <p className="text-sm font-medium">{t("contacts.noContacts")}</p>
             <p className="text-xs text-muted-foreground">
-              Add at least one person Suraksha360 can alert if something goes wrong.
+              {t("dashboard.addTrustedContactDesc")}
             </p>
           </div>
         ) : (
           contacts.map((c) => (
             <div
               key={c.id}
-              className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-3"
+              className="flex items-center gap-3 rounded-xl border border-foreground/10 bg-foreground/[0.03] p-3"
             >
               <Avatar>
                 <AvatarFallback>{getInitials(c.name)}</AvatarFallback>
@@ -57,7 +59,7 @@ export function TrustedCircleCard() {
                   (hasActiveJourney ? "text-brand-emerald" : "text-muted-foreground")
                 }
               >
-                {hasActiveJourney ? "Watching journey" : "No active journey"}
+                {hasActiveJourney ? t("dashboard.watchingJourney") : t("dashboard.noActiveJourneyShort")}
               </span>
             </div>
           ))
@@ -65,7 +67,7 @@ export function TrustedCircleCard() {
 
         <Button variant="outline" asChild>
           <Link href="/contacts">
-            <UserPlus className="size-4" /> Manage contacts
+            <UserPlus className="size-4" /> {t("dashboard.manageContacts")}
           </Link>
         </Button>
       </CardContent>

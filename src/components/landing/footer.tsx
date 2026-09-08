@@ -41,7 +41,7 @@ const columns = [
 export function Footer() {
   return (
     <footer className="relative mx-auto max-w-6xl px-4 pt-20 pb-10">
-      <div className="grid gap-10 border-b border-white/10 pb-12 sm:grid-cols-2 lg:grid-cols-[1.4fr_repeat(4,1fr)]">
+      <div className="grid gap-10 border-b border-foreground/10 pb-12 sm:grid-cols-2 lg:grid-cols-[1.4fr_repeat(4,1fr)]">
         <div className="flex flex-col gap-4">
           <Logo />
           <p className="max-w-xs text-sm text-muted-foreground">
@@ -53,7 +53,7 @@ export function Footer() {
               <a
                 key={i}
                 href="#"
-                className="flex size-9 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-muted-foreground transition-colors hover:bg-white/[0.08] hover:text-foreground"
+                className="flex size-9 items-center justify-center rounded-lg border border-foreground/10 bg-foreground/[0.03] text-muted-foreground transition-colors hover:bg-foreground/[0.08] hover:text-foreground"
               >
                 <Icon className="size-4" />
               </a>

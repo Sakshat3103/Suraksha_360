@@ -8,7 +8,7 @@ export const CommunityMapClient = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex h-[280px] items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] text-sm text-muted-foreground">
+      <div className="flex h-[280px] items-center justify-center gap-2 rounded-xl border border-foreground/10 bg-foreground/[0.03] text-sm text-muted-foreground">
         <Loader2 className="size-4 animate-spin" /> Loading map…
       </div>
     ),

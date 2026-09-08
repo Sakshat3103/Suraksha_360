@@ -13,11 +13,13 @@ import { Separator } from "@/components/ui/separator";
 import { PasswordInput } from "@/components/auth/password-input";
 import { AuthCard } from "@/components/auth/auth-card";
 import { signInAction } from "@/lib/actions/auth";
+import { useT } from "@/lib/i18n/use-t";
 
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = React.useTransition();
+  const { t } = useT();
 
   function handleSubmit(formData: FormData) {
     const email = String(formData.get("email"));
@@ -39,13 +41,13 @@ export function LoginForm() {
     <AuthCard title="Welcome back" description="Sign in to continue your safety journey.">
       <form action={handleSubmit} className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">{t("auth.email")}</Label>
           <Input id="email" name="email" type="email" placeholder="you@example.com" required />
         </div>
 
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">{t("auth.password")}</Label>
             <Link href="/forgot-password" className="text-xs text-primary hover:underline">
               Forgot password?
             </Link>
@@ -60,7 +62,7 @@ export function LoginForm() {
 
         <Button type="submit" variant="glow" size="lg" disabled={isPending} className="mt-2">
           {isPending ? <Loader2 className="size-4 animate-spin" /> : <ArrowRight className="size-4" />}
-          Sign in
+          {t("auth.signIn")}
         </Button>
       </form>
 
@@ -78,7 +80,7 @@ export function LoginForm() {
       <p className="text-center text-sm text-muted-foreground">
         Don&apos;t have an account?{" "}
         <Link href="/signup" className="font-medium text-primary hover:underline">
-          Create one
+          {t("auth.createAccount")}
         </Link>
       </p>
 

@@ -114,9 +114,9 @@ export function AICopilot() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 16, scale: 0.97 }}
             transition={{ duration: 0.18 }}
-            className="glass-strong fixed right-5 bottom-24 z-[110] flex h-[520px] w-[min(380px,calc(100vw-2.5rem))] flex-col overflow-hidden rounded-2xl border border-white/10 shadow-2xl"
+            className="glass-strong fixed right-5 bottom-24 z-[110] flex h-[520px] w-[min(380px,calc(100vw-2.5rem))] flex-col overflow-hidden rounded-2xl border border-foreground/10 shadow-2xl"
           >
-            <div className="flex items-center gap-2 border-b border-white/10 px-4 py-3.5">
+            <div className="flex items-center gap-2 border-b border-foreground/10 px-4 py-3.5">
               <span className="flex size-8 items-center justify-center rounded-full bg-gradient-brand text-white">
                 <ShieldHalf className="size-4" />
               </span>
@@ -136,7 +136,7 @@ export function AICopilot() {
                     "max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed",
                     m.role === "user"
                       ? "self-end bg-gradient-brand text-white"
-                      : "self-start border border-white/10 bg-white/[0.04]"
+                      : "self-start border border-foreground/10 bg-foreground/[0.04]"
                   )}
                 >
                   {m.text}
@@ -149,12 +149,12 @@ export function AICopilot() {
               )}
             </div>
 
-            <div className="flex flex-wrap gap-1.5 border-t border-white/10 px-3 pt-2.5">
+            <div className="flex flex-wrap gap-1.5 border-t border-foreground/10 px-3 pt-2.5">
               {SUGGESTIONS.map((s) => (
                 <button
                   key={s}
                   onClick={() => handleSend(s)}
-                  className="rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1 text-[11px] text-muted-foreground hover:text-foreground"
+                  className="rounded-full border border-foreground/10 bg-foreground/[0.03] px-2.5 py-1 text-[11px] text-muted-foreground hover:text-foreground"
                 >
                   {s}
                 </button>
@@ -172,7 +172,7 @@ export function AICopilot() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Ask your Safety Copilot…"
-                className="flex-1 rounded-full border border-white/10 bg-white/[0.04] px-3.5 py-2 text-sm outline-none focus:border-brand-blue/50"
+                className="flex-1 rounded-full border border-foreground/10 bg-foreground/[0.04] px-3.5 py-2 text-sm outline-none focus:border-brand-blue/50"
               />
               <Button type="submit" size="icon" variant="glow" disabled={sending}>
                 <Send className="size-4" />

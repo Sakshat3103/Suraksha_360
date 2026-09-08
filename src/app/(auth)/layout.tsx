@@ -9,7 +9,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       <div className="pointer-events-none absolute bottom-0 right-0 h-96 w-96 rounded-full bg-brand-blue/15 blur-[100px]" />
 
       {/* Brand panel */}
-      <div className="relative hidden w-1/2 flex-col justify-between overflow-hidden border-r border-white/10 p-12 lg:flex">
+      <div className="relative hidden w-1/2 flex-col justify-between overflow-hidden border-r border-foreground/10 p-12 lg:flex">
         <Link href="/">
           <Logo />
         </Link>

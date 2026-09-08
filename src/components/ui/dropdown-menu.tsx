@@ -47,7 +47,7 @@ function DropdownMenuItem({
       data-variant={variant}
       className={cn(
         "relative flex cursor-pointer items-center gap-2 rounded-lg px-2.5 py-2 text-sm outline-none select-none transition-colors",
-        "focus:bg-white/[0.08] data-[variant=destructive]:text-destructive data-[variant=destructive]:focus:bg-destructive/10",
+        "focus:bg-foreground/[0.08] data-[variant=destructive]:text-destructive data-[variant=destructive]:focus:bg-destructive/10",
         "data-[disabled]:pointer-events-none data-[disabled]:opacity-40 data-[inset]:pl-8",
         "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:size-4",
         className
@@ -66,7 +66,7 @@ function DropdownMenuCheckboxItem({
   return (
     <DropdownMenuPrimitive.CheckboxItem
       className={cn(
-        "relative flex cursor-pointer items-center gap-2 rounded-lg py-2 pr-2.5 pl-8 text-sm outline-none select-none focus:bg-white/[0.08]",
+        "relative flex cursor-pointer items-center gap-2 rounded-lg py-2 pr-2.5 pl-8 text-sm outline-none select-none focus:bg-foreground/[0.08]",
         className
       )}
       checked={checked}
@@ -90,7 +90,7 @@ function DropdownMenuRadioItem({
   return (
     <DropdownMenuPrimitive.RadioItem
       className={cn(
-        "relative flex cursor-pointer items-center gap-2 rounded-lg py-2 pr-2.5 pl-8 text-sm outline-none select-none focus:bg-white/[0.08]",
+        "relative flex cursor-pointer items-center gap-2 rounded-lg py-2 pr-2.5 pl-8 text-sm outline-none select-none focus:bg-foreground/[0.08]",
         className
       )}
       {...props}
@@ -153,7 +153,7 @@ function DropdownMenuSubTrigger({
     <DropdownMenuPrimitive.SubTrigger
       data-inset={inset}
       className={cn(
-        "flex cursor-pointer items-center rounded-lg px-2.5 py-2 text-sm outline-none select-none focus:bg-white/[0.08] data-[inset]:pl-8",
+        "flex cursor-pointer items-center rounded-lg px-2.5 py-2 text-sm outline-none select-none focus:bg-foreground/[0.08] data-[inset]:pl-8",
         className
       )}
       {...props}

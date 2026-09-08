@@ -8,6 +8,7 @@ import { Logo } from "@/components/shared/logo";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { primaryNav, secondaryNav } from "@/lib/nav-config";
+import { useT } from "@/lib/i18n/use-t";
 import { useUIStore } from "@/store/use-ui-store";
 import { signOutAction } from "@/lib/actions/auth";
 
@@ -16,6 +17,7 @@ export function MobileNav() {
   const router = useRouter();
   const open = useUIStore((s) => s.mobileNavOpen);
   const setOpen = useUIStore((s) => s.setMobileNavOpen);
+  const { t } = useT();
 
   async function handleSignOut() {
     await signOutAction();
@@ -39,44 +41,44 @@ export function MobileNav() {
 
         <div className="flex flex-1 flex-col gap-1 px-4">
           <p className="px-1 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
-            Safety
+            {t("nav.safety")}
           </p>
           {primaryNav.map((item) => (
             <Link
-              key={item.label}
+              key={item.labelKey}
               href={item.href}
               onClick={() => setOpen(false)}
               className={cn(
                 "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium",
                 pathname === item.href
                   ? "bg-gradient-brand text-white"
-                  : "text-muted-foreground hover:bg-white/[0.06] hover:text-foreground"
+                  : "text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground"
               )}
             >
               <item.icon className="size-4.5" />
-              {item.label}
+              {t(item.labelKey)}
             </Link>
           ))}
 
           <div className="my-2 h-px bg-white/10" />
 
           <p className="px-1 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
-            Account
+            {t("nav.account")}
           </p>
           {secondaryNav.map((item) => (
             <Link
-              key={item.label}
+              key={item.labelKey}
               href={item.href}
               onClick={() => setOpen(false)}
               className={cn(
                 "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium",
                 pathname === item.href
                   ? "bg-gradient-brand text-white"
-                  : "text-muted-foreground hover:bg-white/[0.06] hover:text-foreground"
+                  : "text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground"
               )}
             >
               <item.icon className="size-4.5" />
-              {item.label}
+              {t(item.labelKey)}
             </Link>
           ))}
         </div>
@@ -84,7 +86,7 @@ export function MobileNav() {
         <div className="p-4">
           <Button variant="ghost" size="sm" onClick={handleSignOut} className="w-full justify-start text-muted-foreground">
             <LogOut className="size-4" />
-            Sign out
+            {t("nav.signOut")}
           </Button>
         </div>
       </SheetContent>

@@ -10,7 +10,7 @@ function TabsList({ className, ...props }: React.ComponentProps<typeof TabsPrimi
   return (
     <TabsPrimitive.List
       className={cn(
-        "bg-white/[0.04] border border-white/10 text-muted-foreground inline-flex h-10 w-fit items-center justify-center rounded-xl p-1",
+        "bg-foreground/[0.04] border border-foreground/10 text-muted-foreground inline-flex h-10 w-fit items-center justify-center rounded-xl p-1",
         className
       )}
       {...props}

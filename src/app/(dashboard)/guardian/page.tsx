@@ -10,10 +10,12 @@ import { useJourneyStore } from "@/store/use-journey-store";
 import { useTimelineStore } from "@/store/use-timeline-store";
 import { computeSafetyScore, scoreBand } from "@/lib/risk-engine";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n/use-t";
 
 export default function GuardianPage() {
   const { status, destination, route, mode } = useJourneyStore();
   const events = useTimelineStore((s) => s.events);
+  const { t } = useT();
   const [battery, setBattery] = React.useState<number | null>(null);
   const [now, setNow] = React.useState(new Date());
 
@@ -46,8 +48,8 @@ export default function GuardianPage() {
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-6">
       <div>
-        <h2 className="text-xl font-semibold tracking-tight">Guardian Copilot</h2>
-        <p className="text-sm text-muted-foreground">Live view of the journey you&apos;re watching over.</p>
+        <h2 className="text-xl font-semibold tracking-tight">{t("nav.guardian")}</h2>
+        <p className="text-sm text-muted-foreground">{t("guardian.subtitle")}</p>
       </div>
 
       {status === "idle" || !route ? (
@@ -56,10 +58,9 @@ export default function GuardianPage() {
             <span className="flex size-12 items-center justify-center rounded-2xl bg-gradient-brand text-white">
               <ShieldHalf className="size-6" />
             </span>
-            <p className="font-medium">No active journey to watch</p>
+            <p className="font-medium">{t("guardian.noActiveJourney")}</p>
             <p className="max-w-sm text-sm text-muted-foreground">
-              As soon as a Safe Journey starts, this dashboard fills in with live location, ETA, safety score, and
-              intelligent alerts.
+              {t("guardian.noActiveJourneyDesc")}
             </p>
           </CardContent>
         </Card>
@@ -67,13 +68,13 @@ export default function GuardianPage() {
         <>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {[
-              { icon: MapPin, label: "Destination", value: destination ?? "—" },
-              { icon: Navigation2, label: "Route status", value: status === "escalated" ? "Escalated" : "On track" },
-              { icon: Gauge, label: "Safety score", value: risk ? `${risk.score}/100` : "—" },
-              { icon: Battery, label: "Battery", value: battery !== null ? `${battery}%` : "Unavailable" },
+              { icon: MapPin, label: t("guardian.destination"), value: destination ?? "—" },
+              { icon: Navigation2, label: t("guardian.routeStatus"), value: status === "escalated" ? t("guardian.escalatedStatus") : t("guardian.onTrack") },
+              { icon: Gauge, label: t("guardian.safetyScore"), value: risk ? `${risk.score}/100` : "—" },
+              { icon: Battery, label: t("guardian.battery"), value: battery !== null ? `${battery}%` : t("guardian.unavailable") },
             ].map((tile) => (
               <div key={tile.label} className="glass flex flex-col gap-2 rounded-2xl p-4">
-                <span className="flex size-9 items-center justify-center rounded-lg bg-white/[0.06] text-brand-blue">
+                <span className="flex size-9 items-center justify-center rounded-lg bg-foreground/[0.06] text-brand-blue">
                   <tile.icon className="size-4" />
                 </span>
                 <div>
@@ -88,7 +89,7 @@ export default function GuardianPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base">
-                  <Route className="size-4.5 text-brand-blue" /> Live location
+                  <Route className="size-4.5 text-brand-blue" /> {t("guardian.liveLocation")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="flex flex-col gap-3">
@@ -99,10 +100,10 @@ export default function GuardianPage() {
                 />
                 <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1.5">
-                    <TimerReset className="size-3.5" /> Last updated {now.toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" })}
+                    <TimerReset className="size-3.5" /> {t("guardian.lastUpdated")} {now.toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" })}
                   </span>
-                  <span>Mode: {mode ?? "—"}</span>
-                  <span>Current speed: {mode === "walking" ? "~4.5 km/h" : "~18 km/h"} (est.)</span>
+                  <span>{t("guardian.mode")}: {mode ?? "—"}</span>
+                  <span>{t("guardian.currentSpeed")}: {mode === "walking" ? "~4.5 km/h" : "~18 km/h"} (est.)</span>
                 </div>
               </CardContent>
             </Card>
@@ -110,12 +111,12 @@ export default function GuardianPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base">
-                  <Siren className="size-4.5 text-destructive" /> Intelligent alerts
+                  <Siren className="size-4.5 text-destructive" /> {t("guardian.intelligentAlerts")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="flex flex-col gap-2">
                 {alerts.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No alerts — journey is proceeding normally.</p>
+                  <p className="text-sm text-muted-foreground">{t("guardian.noAlerts")}</p>
                 ) : (
                   alerts.map((a, i) => (
                     <motion.div
@@ -134,7 +135,7 @@ export default function GuardianPage() {
                 )}
                 {risk && (
                   <p className={cn("mt-2 text-xs font-medium", scoreBand(risk.score).tone === "safe" ? "text-brand-emerald" : "text-amber-300")}>
-                    Current status: {scoreBand(risk.score).label}
+                    {t("guardian.currentStatus")}: {scoreBand(risk.score).label}
                   </p>
                 )}
               </CardContent>

@@ -10,20 +10,20 @@ import {
 } from "lucide-react";
 
 export interface NavItem {
-  label: string;
+  labelKey: string;
   href: string;
   icon: LucideIcon;
 }
 
 export const primaryNav: NavItem[] = [
-  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Emergency Contacts", href: "/contacts", icon: Users },
-  { label: "Community", href: "/community", icon: MessageSquareWarning },
-  { label: "Guardian", href: "/guardian", icon: ShieldHalf },
-  { label: "Alerts", href: "/alerts", icon: ShieldAlert },
+  { labelKey: "nav.dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { labelKey: "nav.contacts", href: "/contacts", icon: Users },
+  { labelKey: "nav.community", href: "/community", icon: MessageSquareWarning },
+  { labelKey: "nav.guardian", href: "/guardian", icon: ShieldHalf },
+  { labelKey: "nav.alerts", href: "/alerts", icon: ShieldAlert },
 ];
 
 export const secondaryNav: NavItem[] = [
-  { label: "Profile", href: "/profile", icon: User },
-  { label: "Settings", href: "/settings", icon: Settings },
+  { labelKey: "nav.profile", href: "/profile", icon: User },
+  { labelKey: "nav.settings", href: "/settings", icon: Settings },
 ];

@@ -184,7 +184,7 @@ export function RouteMap({
     <div
       ref={containerRef}
       style={{ height, width: "100%" }}
-      className="overflow-hidden rounded-xl border border-white/10"
+      className="overflow-hidden rounded-xl border border-foreground/10"
     />
   );
 }

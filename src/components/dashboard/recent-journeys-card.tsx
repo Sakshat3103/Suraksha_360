@@ -3,17 +3,20 @@
 import { AlertOctagon, History } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useJourneyStore } from "@/store/use-journey-store";
+import { translate } from "@/lib/i18n/dictionary";
+import type { LocaleCode } from "@/store/use-locale-store";
+import { useT } from "@/lib/i18n/use-t";
 
-const MODE_LABEL: Record<string, string> = {
-  walking: "Walking",
-  bus: "Bus",
-  metro: "Metro",
-  cab: "Cab",
-  scooty: "Scooty",
-  school_bus: "School bus",
+const MODE_LABEL_KEY: Record<string, string> = {
+  walking: "dashboard.modeWalking",
+  bus: "dashboard.modeBus",
+  metro: "dashboard.modeMetro",
+  cab: "dashboard.modeCab",
+  scooty: "dashboard.modeScooty",
+  school_bus: "dashboard.modeSchoolBus",
 };
 
-function formatWhen(iso: string) {
+function formatWhen(iso: string, locale: LocaleCode) {
   const date = new Date(iso);
   const now = new Date();
   const isToday = date.toDateString() === now.toDateString();
@@ -21,8 +24,8 @@ function formatWhen(iso: string) {
   yesterday.setDate(now.getDate() - 1);
   const isYesterday = date.toDateString() === yesterday.toDateString();
   const time = date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
-  if (isToday) return `Today, ${time}`;
-  if (isYesterday) return `Yesterday, ${time}`;
+  if (isToday) return `${translate("dashboard.today", locale)}, ${time}`;
+  if (isYesterday) return `${translate("dashboard.yesterday", locale)}, ${time}`;
   return `${date.toLocaleDateString([], { month: "short", day: "numeric" })}, ${time}`;
 }
 
@@ -30,21 +33,22 @@ function formatWhen(iso: string) {
 // endJourney in use-journey-store), never seeded with placeholder data.
 export function RecentJourneysCard() {
   const history = useJourneyStore((s) => s.history);
+  const { t, locale } = useT();
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Recent journeys</CardTitle>
+        <CardTitle className="text-base">{t("dashboard.recentJourneys")}</CardTitle>
       </CardHeader>
       <CardContent>
         {history.length === 0 ? (
           <div className="flex flex-col items-center gap-2 py-6 text-center">
-            <span className="flex size-10 items-center justify-center rounded-xl bg-white/[0.06] text-muted-foreground">
+            <span className="flex size-10 items-center justify-center rounded-xl bg-foreground/[0.06] text-muted-foreground">
               <History className="size-4.5" />
             </span>
-            <p className="text-sm font-medium">No journeys yet</p>
+            <p className="text-sm font-medium">{t("dashboard.noJourneysYet")}</p>
             <p className="max-w-xs text-xs text-muted-foreground">
-              Journeys you complete with Suraksha360 will show up here.
+              {t("dashboard.noJourneysDesc")}
             </p>
           </div>
         ) : (
@@ -57,7 +61,7 @@ export function RecentJourneysCard() {
                     {j.wasEscalated && <AlertOctagon className="size-3.5 text-destructive" />}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {MODE_LABEL[j.mode] ?? j.mode} · {j.distanceText} · {formatWhen(j.completedAt)}
+                    {MODE_LABEL_KEY[j.mode] ? t(MODE_LABEL_KEY[j.mode]) : j.mode} · {j.distanceText} · {formatWhen(j.completedAt, locale)}
                   </p>
                 </div>
                 <span

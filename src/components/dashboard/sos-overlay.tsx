@@ -12,6 +12,7 @@ import { useContacts } from "@/hooks/use-contacts";
 import { useLiveLocation } from "@/hooks/use-live-location";
 import { fetchSafeZones, googleMapsDirectionsUrl, type SafeZone } from "@/lib/geo";
 import { requestAI } from "@/lib/ai/client";
+import { useT } from "@/lib/i18n/use-t";
 
 // Same priority a real emergency responder would use: an actual government
 // facility (police/hospital) beats a private business every time, even if
@@ -45,6 +46,7 @@ const ESCALATION_SECONDS = 10;
 // audio capture requires; a native app is the honest way to do that part.
 export function SosOverlay() {
   const { status, trigger, cancel, escalate } = useSosStore();
+  const { t } = useT();
   const [secondsLeft, setSecondsLeft] = React.useState(ESCALATION_SECONDS);
   const route = useJourneyStore((s) => s.route);
   const destination = useJourneyStore((s) => s.destination);
@@ -139,7 +141,7 @@ export function SosOverlay() {
         >
           <button
             onClick={cancel}
-            className="absolute right-3 top-3 flex size-7 items-center justify-center rounded-full text-muted-foreground hover:bg-white/[0.08] hover:text-foreground"
+            className="absolute right-3 top-3 flex size-7 items-center justify-center rounded-full text-muted-foreground hover:bg-foreground/[0.08] hover:text-foreground"
             aria-label="Cancel SOS"
           >
             <X className="size-4" />
@@ -151,7 +153,7 @@ export function SosOverlay() {
 
           <div>
             <p className="text-lg font-semibold">
-              {status === "escalated" ? "SOS escalated" : trigger ? triggerLabel[trigger] : "SOS triggered"}
+              {status === "escalated" ? t("sos.escalated") : trigger ? triggerLabel[trigger] : t("sos.triggered")}
             </p>
             <p className="mt-1 text-sm text-muted-foreground">
               {status === "escalated"
@@ -161,7 +163,7 @@ export function SosOverlay() {
           </div>
 
           <div className="flex items-center gap-1.5 rounded-full bg-destructive/10 px-3 py-1 text-xs font-medium text-destructive">
-            <Mic className="size-3.5 animate-pulse" /> Voice recorder on
+            <Mic className="size-3.5 animate-pulse" /> {t("sos.voiceRecorderOn")}
           </div>
 
           {status === "triggered" && (
@@ -171,7 +173,7 @@ export function SosOverlay() {
                 <p className="text-xs text-muted-foreground">seconds until escalation</p>
               </div>
               <Button variant="secondary" size="lg" className="w-full" onClick={cancel}>
-                I&apos;m safe — cancel SOS
+                {t("sos.imSafeCancel")}
               </Button>
             </>
           )}
@@ -187,13 +189,13 @@ export function SosOverlay() {
               )}
               <Button asChild variant={primaryContact ? "outline" : "destructive"} size="lg" className="w-full">
                 <a href="tel:112">
-                  <PhoneCall className="size-4" /> Call emergency services (112)
+                  <PhoneCall className="size-4" /> {t("sos.callEmergency")}
                 </a>
               </Button>
 
               <div className="mt-1 flex flex-col gap-1.5 rounded-xl border border-brand-emerald/30 bg-brand-emerald/5 p-3 text-left">
                 <p className="flex items-center gap-1.5 text-xs font-semibold text-brand-emerald">
-                  <LifeBuoy className="size-3.5" /> AI-recommended nearest safe location
+                  <LifeBuoy className="size-3.5" /> {t("sos.nearestSafeLocation")}
                 </p>
                 {loadingSafeHaven ? (
                   <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -210,7 +212,7 @@ export function SosOverlay() {
                     {safeHavenReason && <p className="text-xs text-muted-foreground">{safeHavenReason}</p>}
                     <Button asChild variant="outline" size="sm" className="mt-1 w-full gap-1.5">
                       <a href={googleMapsDirectionsUrl(origin!, { lat: nearestSafeHaven.lat, lng: nearestSafeHaven.lng }, "walking")} target="_blank" rel="noreferrer">
-                        <Navigation2 className="size-3.5" /> Navigate there now
+                        <Navigation2 className="size-3.5" /> {t("sos.navigateNow")}
                       </a>
                     </Button>
                   </>
@@ -223,7 +225,7 @@ export function SosOverlay() {
                 An anonymous safety packet (location + risk level only) was sent to the control room.
               </p>
               <Button variant="secondary" size="lg" className="w-full" onClick={cancel}>
-                I&apos;m safe — resolve
+                {t("sos.imSafeResolve")}
               </Button>
             </div>
           )}

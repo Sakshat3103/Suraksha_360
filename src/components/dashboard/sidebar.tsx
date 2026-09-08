@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { Logo } from "@/components/shared/logo";
 import { Button } from "@/components/ui/button";
 import { primaryNav, secondaryNav } from "@/lib/nav-config";
+import { useT } from "@/lib/i18n/use-t";
 import { useUIStore } from "@/store/use-ui-store";
 import { useSosStore } from "@/store/use-sos-store";
 import { signOutAction } from "@/lib/actions/auth";
@@ -21,16 +22,18 @@ import {
 function NavLink({
   href,
   icon: Icon,
-  label,
+  labelKey,
   collapsed,
   active,
 }: {
   href: string;
   icon: React.ElementType;
-  label: string;
+  labelKey: string;
   collapsed: boolean;
   active: boolean;
 }) {
+  const { t } = useT();
+  const label = t(labelKey);
   const content = (
     <Link
       href={href}
@@ -38,7 +41,7 @@ function NavLink({
         "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
         active
           ? "bg-gradient-brand text-white shadow-md shadow-[oklch(0.55_0.2_280_/_0.3)]"
-          : "text-muted-foreground hover:bg-white/[0.06] hover:text-foreground",
+          : "text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground",
         collapsed && "justify-center px-2.5"
       )}
     >
@@ -63,6 +66,7 @@ export function Sidebar() {
   const toggleSidebar = useUIStore((s) => s.toggleSidebar);
   const fireSos = useSosStore((s) => s.fire);
   const router = useRouter();
+  const { t } = useT();
 
   async function handleSignOut() {
     await signOutAction();
@@ -74,7 +78,7 @@ export function Sidebar() {
     <motion.aside
       animate={{ width: collapsed ? 84 : 268 }}
       transition={{ duration: 0.25, ease: "easeInOut" }}
-      className="glass sticky top-0 hidden h-screen shrink-0 flex-col border-r border-white/10 p-4 lg:flex"
+      className="glass sticky top-0 hidden h-screen shrink-0 flex-col border-r border-foreground/10 p-4 lg:flex"
     >
       <div className={cn("flex items-center gap-2 px-1", collapsed && "justify-center")}>
         {collapsed ? <Logo iconOnly /> : <Logo />}
@@ -82,7 +86,7 @@ export function Sidebar() {
 
       <button
         onClick={toggleSidebar}
-        className="absolute -right-3 top-9 flex size-6 items-center justify-center rounded-full border border-white/10 bg-[var(--popover)] text-muted-foreground shadow-md transition-transform hover:text-foreground"
+        className="absolute -right-3 top-9 flex size-6 items-center justify-center rounded-full border border-foreground/10 bg-[var(--popover)] text-muted-foreground shadow-md transition-transform hover:text-foreground"
       >
         <ChevronsLeft className={cn("size-3.5 transition-transform", collapsed && "rotate-180")} />
       </button>
@@ -90,12 +94,12 @@ export function Sidebar() {
       <div className="mt-8 flex flex-1 flex-col gap-1">
         {!collapsed && (
           <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
-            Safety
+            {t("nav.safety")}
           </p>
         )}
         {primaryNav.map((item) => (
           <NavLink
-            key={item.label}
+            key={item.labelKey}
             {...item}
             collapsed={collapsed}
             active={pathname === item.href}
@@ -106,12 +110,12 @@ export function Sidebar() {
 
         {!collapsed && (
           <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
-            Account
+            {t("nav.account")}
           </p>
         )}
         {secondaryNav.map((item) => (
           <NavLink
-            key={item.label}
+            key={item.labelKey}
             {...item}
             collapsed={collapsed}
             active={pathname === item.href}
@@ -131,8 +135,8 @@ export function Sidebar() {
         </span>
         {!collapsed && (
           <div className="min-w-0">
-            <p className="truncate text-xs font-medium">Emergency SOS</p>
-            <p className="truncate text-[11px] text-muted-foreground">Tap, or double-tap anywhere</p>
+            <p className="truncate text-xs font-medium">{t("sos.emergencySos")}</p>
+            <p className="truncate text-[11px] text-muted-foreground">{t("sos.tapHint")}</p>
           </div>
         )}
       </button>
@@ -144,7 +148,7 @@ export function Sidebar() {
         className={cn("mt-2 justify-start text-muted-foreground", collapsed && "justify-center px-2")}
       >
         <LogOut className="size-4" />
-        {!collapsed && "Sign out"}
+        {!collapsed && t("nav.signOut")}
       </Button>
     </motion.aside>
   );
