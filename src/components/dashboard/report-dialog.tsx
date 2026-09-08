@@ -25,6 +25,7 @@ import {
 import { useCommunityStore, type ReportCategory } from "@/store/use-community-store";
 import { useLiveLocation } from "@/hooks/use-live-location";
 import { toast } from "sonner";
+import { useT } from "@/lib/i18n/use-t";
 
 const CATEGORIES: ReportCategory[] = [
   "Harassment",
@@ -37,12 +38,24 @@ const CATEGORIES: ReportCategory[] = [
   "Medical Emergency",
 ];
 
+const CATEGORY_LABEL_KEY: Record<ReportCategory, string> = {
+  "Harassment": "community.catHarassment",
+  "Broken Streetlights": "community.catStreetlights",
+  "Road Hazard": "community.catRoadHazard",
+  "Unsafe Area": "community.catUnsafeArea",
+  "Accident": "community.catAccident",
+  "Suspicious Activity": "community.catSuspicious",
+  "Police Patrol": "community.catPolicePatrol",
+  "Medical Emergency": "community.catMedical",
+};
+
 export function ReportDialog() {
   const [open, setOpen] = React.useState(false);
   const [category, setCategory] = React.useState<ReportCategory>("Harassment");
   const [image, setImage] = React.useState<string | undefined>(undefined);
   const { position, isLocating, getOnce } = useLiveLocation();
   const addReport = useCommunityStore((s) => s.addReport);
+  const { t } = useT();
 
   function handleSubmit(formData: FormData) {
     if (!position) {
@@ -74,20 +87,20 @@ export function ReportDialog() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="glow">
-          <MegaphoneIcon className="size-4" /> Report anonymously
+          <MegaphoneIcon className="size-4" /> {t("community.reportAnonymously")}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Report a safety concern</DialogTitle>
+          <DialogTitle>{t("community.reportSafetyConcern")}</DialogTitle>
           <DialogDescription>
-            Submitted anonymously. Helps the AI Community Summary warn others nearby.
+            {t("community.reportDialogDesc")}
           </DialogDescription>
         </DialogHeader>
 
         <form action={handleSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
-            <Label>Category</Label>
+            <Label>{t("community.category")}</Label>
             <Select value={category} onValueChange={(v) => setCategory(v as ReportCategory)}>
               <SelectTrigger>
                 <SelectValue />
@@ -95,7 +108,7 @@ export function ReportDialog() {
               <SelectContent>
                 {CATEGORIES.map((c) => (
                   <SelectItem key={c} value={c}>
-                    {c}
+                    {t(CATEGORY_LABEL_KEY[c])}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -103,31 +116,31 @@ export function ReportDialog() {
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="title">Title</Label>
-            <Input id="title" name="title" placeholder="Brief summary" required />
+            <Label htmlFor="title">{t("community.title2")}</Label>
+            <Input id="title" name="title" placeholder={t("community.briefSummary")} required />
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea id="description" name="description" placeholder="What happened, when, and any detail that helps others" required />
+            <Label htmlFor="description">{t("community.description")}</Label>
+            <Textarea id="description" name="description" placeholder={t("community.descriptionPlaceholder")} required />
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label>Location</Label>
+            <Label>{t("community.location")}</Label>
             <Button type="button" variant="outline" onClick={getOnce} disabled={isLocating}>
               {isLocating ? <Loader2 className="size-4 animate-spin" /> : <LocateFixed className="size-4" />}
-              {position ? "Location captured" : "Use my current location"}
+              {position ? t("community.locationCaptured") : t("community.useMyLocation")}
             </Button>
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="image">Photo (optional)</Label>
+            <Label htmlFor="image">{t("community.photoOptional")}</Label>
             <Input id="image" name="image" type="file" accept="image/*" onChange={handleImageChange} />
           </div>
 
           <DialogFooter>
             <Button type="submit" variant="glow">
-              Submit report
+              {t("community.submitReport")}
             </Button>
           </DialogFooter>
         </form>

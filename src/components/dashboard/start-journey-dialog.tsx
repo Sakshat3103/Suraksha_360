@@ -34,14 +34,15 @@ import {
   type NearbyPlace,
   type PlaceResult,
 } from "@/lib/geo";
+import { useT } from "@/lib/i18n/use-t";
 
-const TRAVEL_MODES: { value: TravelMode; label: string }[] = [
-  { value: "walking", label: "Walking" },
-  { value: "bus", label: "Bus" },
-  { value: "metro", label: "Metro" },
-  { value: "cab", label: "Cab" },
-  { value: "scooty", label: "Scooty" },
-  { value: "school_bus", label: "School bus" },
+const TRAVEL_MODES: { value: TravelMode; labelKey: string }[] = [
+  { value: "walking", labelKey: "dashboard.modeWalking" },
+  { value: "bus", labelKey: "dashboard.modeBus" },
+  { value: "metro", labelKey: "dashboard.modeMetro" },
+  { value: "cab", labelKey: "dashboard.modeCab" },
+  { value: "scooty", labelKey: "dashboard.modeScooty" },
+  { value: "school_bus", labelKey: "dashboard.modeSchoolBus" },
 ];
 
 // Deterministic mock safety score — a placeholder for the real AI risk model
@@ -65,6 +66,7 @@ export function StartJourneyDialog({
 }) {
   const startJourney = useJourneyStore((s) => s.startJourney);
   const { position: origin, isLive, isLocating, getOnce, enableLive, disableLive } = useLiveLocation();
+  const { t } = useT();
 
   const [mode, setMode] = React.useState<TravelMode>("bus");
   const [query, setQuery] = React.useState("");
@@ -202,17 +204,17 @@ export function StartJourneyDialog({
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <MapPinned className="size-4.5 text-brand-blue" /> Plan a Safe Journey
+            <MapPinned className="size-4.5 text-brand-blue" /> {t("journey.planTitle")}
           </DialogTitle>
           <DialogDescription>
-            Choose where you&apos;re headed — Suraksha360 scores the route before you start.
+            {t("journey.planDesc")}
           </DialogDescription>
         </DialogHeader>
 
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="destination">Destination</Label>
+              <Label htmlFor="destination">{t("journey.destination")}</Label>
               <button
                 type="button"
                 onClick={() => (isLive ? disableLive() : enableLive())}
@@ -224,14 +226,14 @@ export function StartJourneyDialog({
                 )}
               >
                 <Radio className={cn("size-3", isLive && "animate-pulse")} />
-                {isLive ? "Live GPS on" : "Enable live GPS"}
+                {isLive ? t("journey.liveGpsOn") : t("journey.enableLiveGps")}
               </button>
             </div>
             <div className="relative flex gap-2">
               <div className="relative flex-1">
                 <Input
                   id="destination"
-                  placeholder="Search for an address, station, or landmark"
+                  placeholder={t("journey.searchPlaceholder")}
                   value={query}
                   onChange={(e) => {
                     setQuery(e.target.value);
@@ -243,7 +245,7 @@ export function StartJourneyDialog({
                   <div className="glass-strong absolute z-10 mt-1.5 w-full overflow-hidden rounded-xl shadow-2xl">
                     {searching ? (
                       <div className="flex items-center gap-2 px-3 py-3 text-xs text-muted-foreground">
-                        <Loader2 className="size-3.5 animate-spin" /> Searching…
+                        <Loader2 className="size-3.5 animate-spin" /> {t("journey.searching")}
                       </div>
                     ) : (
                       suggestions.map((s) => (
@@ -266,23 +268,23 @@ export function StartJourneyDialog({
             </div>
             {!origin && (
               <p className="text-xs text-muted-foreground">
-                Tap the location icon to share your current position as the starting point.
+                {t("journey.shareLocationHint")}
               </p>
             )}
             {searchError && (
               <p className="flex items-center gap-1.5 text-xs text-amber-300">
-                <AlertTriangle className="size-3.5" /> Search is temporarily unavailable — try again in a moment.
+                <AlertTriangle className="size-3.5" /> {t("journey.searchUnavailable")}
               </p>
             )}
 
             {origin && !destination && (
               <div className="flex flex-col gap-1.5">
                 <p className="text-[11px] uppercase tracking-wide text-muted-foreground/70">
-                  Nearby suggestions
+                  {t("journey.nearbySuggestions")}
                 </p>
                 {nearbyLoading ? (
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Loader2 className="size-3.5 animate-spin" /> Finding places near you…
+                    <Loader2 className="size-3.5 animate-spin" /> {t("journey.findingPlaces")}
                   </div>
                 ) : nearby.length > 0 ? (
                   <div className="flex flex-col gap-1.5">
@@ -299,13 +301,13 @@ export function StartJourneyDialog({
                             {p.category} · {formatDistance(p.distanceMeters)}
                           </span>
                         </span>
-                        <span className="shrink-0 text-xs text-brand-blue">Select</span>
+                        <span className="shrink-0 text-xs text-brand-blue">{t("journey.select")}</span>
                       </button>
                     ))}
                   </div>
                 ) : (
                   <p className="text-xs text-muted-foreground">
-                    No named places found nearby — try searching above instead.
+                    {t("journey.noPlacesFound")}
                   </p>
                 )}
               </div>
@@ -313,7 +315,7 @@ export function StartJourneyDialog({
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label>Travel mode</Label>
+            <Label>{t("journey.travelMode")}</Label>
             <Select value={mode} onValueChange={(v) => setMode(v as TravelMode)}>
               <SelectTrigger>
                 <SelectValue />
@@ -321,7 +323,7 @@ export function StartJourneyDialog({
               <SelectContent>
                 {TRAVEL_MODES.map((m) => (
                   <SelectItem key={m.value} value={m.value}>
-                    {m.label}
+                    {t(m.labelKey)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -338,7 +340,7 @@ export function StartJourneyDialog({
 
           {computing && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="size-4 animate-spin" /> Scoring your route…
+              <Loader2 className="size-4 animate-spin" /> {t("journey.scoringRoute")}
             </div>
           )}
 
@@ -355,7 +357,7 @@ export function StartJourneyDialog({
                 <p className="text-sm font-medium">
                   {route.distanceText} · {route.durationText}
                 </p>
-                <p className="text-xs text-muted-foreground">Estimated route to {route.destinationLabel}</p>
+                <p className="text-xs text-muted-foreground">{t("journey.estimatedRouteTo")} {route.destinationLabel}</p>
               </div>
               <div className="text-right">
                 <p
@@ -367,13 +369,13 @@ export function StartJourneyDialog({
                   {route.safetyScore}
                   <span className="text-sm text-muted-foreground">/100</span>
                 </p>
-                <p className="text-[10px] uppercase tracking-wide text-muted-foreground">safety score</p>
+                <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{t("journey.safetyScoreLabel")}</p>
               </div>
             </div>
           )}
 
           <Button variant="glow" size="lg" onClick={handleStart} disabled={!route}>
-            <ShieldCheck className="size-4" /> Start Safe Journey
+            <ShieldCheck className="size-4" /> {t("journey.startSafeJourney")}
           </Button>
         </div>
       </DialogContent>

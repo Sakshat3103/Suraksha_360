@@ -5,6 +5,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { CommunityReport, ReportCategory } from "@/store/use-community-store";
+import { useT } from "@/lib/i18n/use-t";
+import { translate } from "@/lib/i18n/dictionary";
+import type { LocaleCode } from "@/store/use-locale-store";
 
 const CATEGORY_ICON: Record<ReportCategory, typeof AlertTriangle> = {
   Harassment: AlertTriangle,
@@ -17,26 +20,44 @@ const CATEGORY_ICON: Record<ReportCategory, typeof AlertTriangle> = {
   "Medical Emergency": Ambulance,
 };
 
-const TRUST_META = {
-  verified: { label: "Corroborated", className: "bg-brand-emerald/15 text-brand-emerald" },
-  unverified: { label: "Unverified", className: "bg-amber-500/15 text-amber-500" },
-  flagged: { label: "Low detail — possibly fake", className: "bg-destructive/15 text-destructive" },
+const TRUST_LABEL_KEY = {
+  verified: "community.trustVerified",
+  unverified: "community.trustUnverified",
+  flagged: "community.trustFlagged",
 } as const;
 
-function timeAgo(iso: string) {
+const TRUST_CLASS = {
+  verified: "bg-brand-emerald/15 text-brand-emerald",
+  unverified: "bg-amber-500/15 text-amber-500",
+  flagged: "bg-destructive/15 text-destructive",
+} as const;
+
+const CATEGORY_LABEL_KEY: Record<ReportCategory, string> = {
+  "Harassment": "community.catHarassment",
+  "Broken Streetlights": "community.catStreetlights",
+  "Road Hazard": "community.catRoadHazard",
+  "Unsafe Area": "community.catUnsafeArea",
+  "Accident": "community.catAccident",
+  "Suspicious Activity": "community.catSuspicious",
+  "Police Patrol": "community.catPolicePatrol",
+  "Medical Emergency": "community.catMedical",
+};
+
+function timeAgo(iso: string, locale: LocaleCode) {
   const diffMs = Date.now() - new Date(iso).getTime();
   const hours = Math.floor(diffMs / (1000 * 60 * 60));
-  if (hours < 1) return "Just now";
+  if (hours < 1) return translate("community.justNow", locale);
   if (hours < 24) return `${hours}h ago`;
   return `${Math.floor(hours / 24)}d ago`;
 }
 
 export function ReportList({ reports }: { reports: CommunityReport[] }) {
+  const { t, locale } = useT();
   if (reports.length === 0) {
     return (
       <div className="glass flex flex-col items-center gap-2 rounded-2xl p-10 text-center">
-        <p className="text-sm font-medium">No reports yet</p>
-        <p className="text-xs text-muted-foreground">Be the first to report a safety concern nearby.</p>
+        <p className="text-sm font-medium">{t("community.noReportsYet")}</p>
+        <p className="text-xs text-muted-foreground">{t("community.beFirstToReport")}</p>
       </div>
     );
   }
@@ -54,11 +75,11 @@ export function ReportList({ reports }: { reports: CommunityReport[] }) {
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2">
                   <p className="truncate text-sm font-medium">{r.title}</p>
-                  <span className="shrink-0 text-[11px] text-muted-foreground">{timeAgo(r.createdAt)}</span>
+                  <span className="shrink-0 text-[11px] text-muted-foreground">{timeAgo(r.createdAt, locale)}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground/70">{r.category}</p>
-                  <Badge className={cn("h-4.5 px-1.5 text-[10px]", TRUST_META[r.trust].className)}>{TRUST_META[r.trust].label}</Badge>
+                  <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground/70">{t(CATEGORY_LABEL_KEY[r.category])}</p>
+                  <Badge className={cn("h-4.5 px-1.5 text-[10px]", TRUST_CLASS[r.trust])}>{t(TRUST_LABEL_KEY[r.trust])}</Badge>
                 </div>
                 <p className="mt-1 text-xs text-muted-foreground">{r.description}</p>
                 {r.imageDataUrl && (
