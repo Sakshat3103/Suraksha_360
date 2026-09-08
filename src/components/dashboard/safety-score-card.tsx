@@ -145,7 +145,7 @@ export function SafetyScoreCard({ risk, destination }: { risk: RiskResult; desti
                       <span className="font-semibold text-foreground">{Math.round(ML_MODEL_METRICS.accuracy * 100)}%</span> test accuracy
                     </div>
                     <div>
-                      <span className="font-semibold text-foreground">{ML_MODEL_METRICS.rfR2.toFixed(2)}</span> R² (score regressor)
+                      <span className="font-semibold text-foreground">{Math.round(ML_MODEL_METRICS.f1 * 100)}%</span> F1 score
                     </div>
                     <div>
                       <span className="font-semibold text-foreground">{ML_MODEL_METRICS.trainingSize.toLocaleString()}</span> training samples

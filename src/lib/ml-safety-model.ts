@@ -1,38 +1,47 @@
-// Trained AI Safety Score model — a logistic regression trained with
-// scikit-learn to classify a journey as "high-risk" vs not.
+// Trained AI Safety Score model.
 //
-// v3: trained on 15,000 simulated journeys (up from 6,000), with
-// GridSearchCV 5-fold cross-validated hyperparameter tuning for both
-// models (not left on library defaults), and a more robust real-data
-// feature: `historical_crime_index` is now a 5-year average (2008-2012,
-// the most recent years in the source data) per state rather than a
-// single-year snapshot, reducing sensitivity to any one year's reporting
-// anomalies.
+// v4: switched from logistic regression to a RandomForestClassifier —
+// a non-linear model that captures interactions between factors (e.g.
+// "late night AND high crime-index state" mattering more than either
+// alone) that a linear model structurally cannot. This raised both
+// accuracy AND recall together (not a tradeoff): logistic regression
+// scored 71% accuracy / 71% recall; this forest scores 88% accuracy /
+// 88% recall, cross-validated (not a lucky single split — see below).
+//
+// The forest is exported as plain arrays (see /ml/rf-classifier-data.ts)
+// — feature index, split threshold, and child pointers per node, plus
+// each leaf's learned class-1 probability — and re-implemented here as a
+// from-scratch tree-traversal ensemble. This is an EXACT, faithful port
+// of the trained scikit-learn model, not an approximation: same 40 trees,
+// same splits, same leaf probabilities, just executed in TypeScript
+// instead of via joblib.
 //
 // REAL data: historical_crime_index comes from actual NCRB (National
 // Crime Records Bureau) government data — district-wise crimes against
-// women, 2001-2012 (public NCRB data mirror, 9,017 real district-year
-// rows). See /ml/build_real_crime_index_v3.py and /ml/ncrb_real.csv.
+// women, 2001-2012, 5-year average (2008-2012) per state (public NCRB
+// data mirror, 9,017 real district-year rows). See
+// /ml/build_real_crime_index_v3.py and /ml/ncrb_real.csv.
 // SIMULATED data: per-journey behavior (route deviation, unexpected
 // stops, etc.) — no public dataset tracks one person's specific trip at
-// that granularity, so it's generated from realistic domain rules with
-// noise. See /ml/generate_dataset_v3.py and
-// /ml/safety_score_training_v3.ipynb for the full methodology.
+// that granularity. See /ml/generate_dataset_v3.py.
 //
-// Cross-validated metrics (5-fold, mean +/- std across folds — not just a
-// single lucky train/test split):
-//   RandomForestRegressor:  CV R^2 0.797 +/- 0.002  (held-out test R^2 0.805, MAE 7.06 points)
-//   LogisticRegression:     CV accuracy 0.700 +/- 0.009, CV recall 0.690 +/- 0.017
-//                           (held-out test — accuracy 0.706, recall 0.712, f1 0.516)
-// Best hyperparameters found via grid search: RF max_depth=10, n_estimators=150;
-// LogisticRegression C=0.1, class_weight="balanced" (missing a real
-// high-risk journey is worse than an extra caution on a safe one, so
-// recall is prioritized over precision).
+// Cross-validated metrics (5-fold, mean +/- std — not a single split):
+//   Accuracy: 0.869 +/- 0.008   (held-out test: 0.881)
+//   Recall:   0.877 +/- 0.010   (held-out test: 0.885)
+//   Precision (held-out test): 0.676   F1 (held-out test): 0.766
+// RandomForestClassifier(n_estimators=40, max_depth=5,
+// class_weight="balanced"), trained on 15,000 samples. See
+// /ml/safety_score_training_v4.ipynb for the full comparison against
+// logistic regression and gradient boosting, and why this forest size
+// was chosen (near-identical performance to a much larger 200-tree
+// forest, at a fraction of the exported size).
 //
 // The app doesn't currently reverse-geocode a traveller's coordinates to
 // a state name (a reasonable next enhancement), so
 // predictHighRiskProbability() defaults to DEFAULT_CRIME_INDEX (the real
 // dataset's national mean) unless a caller supplies a known state name.
+import { RF_TREES, RF_FEATURE_ORDER } from "@/lib/ml-forest-data";
+
 export interface MlRiskFeatures {
   hour: number;
   distanceKm: number;
@@ -46,39 +55,20 @@ export interface MlRiskFeatures {
   stateName?: string;
 }
 
-const FEATURE_ORDER = [
-  "hour",
-  "distanceKm",
-  "routeDeviationMeters",
-  "unexpectedStopSeconds",
-  "nearbySafeZoneCount",
-  "nearbyPoliceOrHospital",
-  "communityReportsNearby",
-  "isWeekend",
-  "historicalCrimeIndex",
-] as const;
-
-const SCALER_MEAN = [11.5965, 4.129648, 60.20185, 20.201567, 2.214417, 0.447833, 0.803833, 0.280917, 0.362535];
-const SCALER_SCALE = [7.004417, 2.220428, 59.219838, 20.314153, 1.500203, 0.497271, 0.905273, 0.449447, 0.219569];
-const COEFFICIENTS = [-0.349804, 0.215202, 0.228481, 0.129614, -0.49445, -0.403339, 0.615007, 0.096828, 0.397895];
-const INTERCEPT = -0.274588;
-
 export const ML_MODEL_METRICS = {
-  version: "v3",
+  version: "v4",
+  modelType: "RandomForestClassifier (40 trees, depth 5)",
   trainingSize: 15000,
-  accuracy: 0.7063,
-  precision: 0.4048,
-  recall: 0.7121,
-  f1: 0.5162,
-  cvAccuracyMean: 0.6996,
-  cvAccuracyStd: 0.0087,
-  cvRecallMean: 0.6902,
-  cvRecallStd: 0.0165,
-  rfR2: 0.8049,
-  rfCvR2Mean: 0.7967,
-  rfMae: 7.059,
+  accuracy: 0.881,
+  precision: 0.676,
+  recall: 0.885,
+  f1: 0.766,
+  cvAccuracyMean: 0.869,
+  cvAccuracyStd: 0.008,
+  cvRecallMean: 0.877,
+  cvRecallStd: 0.01,
   trainedOn:
-    "15,000 simulated journeys blended with a REAL feature (historical_crime_index, 5-year average 2008-2012) derived from actual NCRB government data; GridSearchCV 5-fold cross-validated hyperparameter tuning",
+    "15,000 simulated journeys blended with a REAL feature (historical_crime_index, 5-year average 2008-2012) derived from actual NCRB government data; RandomForestClassifier, 5-fold cross-validated",
 };
 
 // Real NCRB-derived crime index per state/UT — 5-year average (2008-2012),
@@ -127,40 +117,46 @@ export const STATE_CRIME_INDEX: Record<string, number> = {
 // default when a specific state isn't known for the current journey.
 export const DEFAULT_CRIME_INDEX = 0.1889;
 
-function sigmoid(x: number): number {
-  return 1 / (1 + Math.exp(-x));
-}
-
 function resolveCrimeIndex(stateName?: string): number {
   if (!stateName) return DEFAULT_CRIME_INDEX;
   return STATE_CRIME_INDEX[stateName.toUpperCase().trim()] ?? DEFAULT_CRIME_INDEX;
 }
 
 function featureVector(f: MlRiskFeatures): number[] {
-  return [
-    f.hour,
-    f.distanceKm,
-    f.routeDeviationMeters,
-    f.unexpectedStopSeconds,
-    f.nearbySafeZoneCount,
-    f.nearbyPoliceOrHospital ? 1 : 0,
-    f.communityReportsNearby,
-    f.isWeekend ? 1 : 0,
-    resolveCrimeIndex(f.stateName),
-  ];
+  const values: Record<(typeof RF_FEATURE_ORDER)[number], number> = {
+    hour: f.hour,
+    distance_km: f.distanceKm,
+    route_deviation_m: f.routeDeviationMeters,
+    unexpected_stop_s: f.unexpectedStopSeconds,
+    nearby_safe_zone_count: f.nearbySafeZoneCount,
+    nearby_police_or_hospital: f.nearbyPoliceOrHospital ? 1 : 0,
+    community_reports_nearby: f.communityReportsNearby,
+    is_weekend: f.isWeekend ? 1 : 0,
+    historical_crime_index: resolveCrimeIndex(f.stateName),
+  };
+  return RF_FEATURE_ORDER.map((name) => values[name]);
+}
+
+// Traverses one decision tree (scikit-learn's flat array format: -1 in
+// children_left marks a leaf) and returns that tree's learned
+// probability of the "high_risk" class for this input.
+function traverseTree(tree: (typeof RF_TREES)[number], x: number[]): number {
+  let node = 0;
+  while (tree.children_left[node] !== -1) {
+    node = x[tree.feature[node]] <= tree.threshold[node] ? tree.children_left[node] : tree.children_right[node];
+  }
+  return tree.value[node];
 }
 
 /**
- * Runs the trained logistic regression and returns the model's predicted
- * probability (0-1) that this journey is "high-risk". Pure function, no
- * network call — the trained weights are baked in above.
+ * Runs the trained RandomForestClassifier (an exact port of the
+ * scikit-learn model — see /ml/safety_score_training_v4.ipynb) and
+ * returns its predicted probability (0-1) that this journey is
+ * "high-risk", averaged across all 40 trees exactly as scikit-learn's
+ * own predict_proba does. Pure function, no network call.
  */
 export function predictHighRiskProbability(f: MlRiskFeatures): number {
   const x = featureVector(f);
-  let logit = INTERCEPT;
-  for (let i = 0; i < FEATURE_ORDER.length; i++) {
-    const standardized = (x[i] - SCALER_MEAN[i]) / SCALER_SCALE[i];
-    logit += COEFFICIENTS[i] * standardized;
-  }
-  return sigmoid(logit);
+  const sum = RF_TREES.reduce((acc, tree) => acc + traverseTree(tree, x), 0);
+  return sum / RF_TREES.length;
 }
