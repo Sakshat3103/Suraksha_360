@@ -1,0 +1,91 @@
+{
+  "features": [
+    "hour",
+    "distance_km",
+    "route_deviation_m",
+    "unexpected_stop_s",
+    "nearby_safe_zone_count",
+    "nearby_police_or_hospital",
+    "community_reports_nearby",
+    "is_weekend",
+    "historical_crime_index"
+  ],
+  "scaler_mean": [
+    11.5965,
+    4.129648,
+    60.20185,
+    20.201567,
+    2.214417,
+    0.447833,
+    0.803833,
+    0.280917,
+    0.362535
+  ],
+  "scaler_scale": [
+    7.004417,
+    2.220428,
+    59.219838,
+    20.314153,
+    1.500203,
+    0.497271,
+    0.905273,
+    0.449447,
+    0.219569
+  ],
+  "coefficients": [
+    -0.349804,
+    0.215202,
+    0.228481,
+    0.129614,
+    -0.49445,
+    -0.403339,
+    0.615007,
+    0.096828,
+    0.397895
+  ],
+  "intercept": -0.274588,
+  "best_C": 0.1,
+  "metrics": {
+    "accuracy": 0.7063,
+    "precision": 0.4048,
+    "recall": 0.7121,
+    "f1": 0.5162,
+    "confusion_matrix": [
+      [
+        1649,
+        691
+      ],
+      [
+        190,
+        470
+      ]
+    ],
+    "cv_accuracy_mean": 0.6996,
+    "cv_accuracy_std": 0.0087,
+    "cv_recall_mean": 0.6902,
+    "cv_recall_std": 0.0165
+  },
+  "rf_metrics": {
+    "mae": 7.059,
+    "r2": 0.8049,
+    "cv_r2_mean": 0.7967,
+    "cv_r2_std": 0.0015,
+    "best_params": {
+      "max_depth": 10,
+      "n_estimators": 150
+    },
+    "feature_importances": {
+      "hour": 0.5981,
+      "distance_km": 0.0255,
+      "route_deviation_m": 0.0304,
+      "unexpected_stop_s": 0.0186,
+      "nearby_safe_zone_count": 0.0692,
+      "nearby_police_or_hospital": 0.0522,
+      "community_reports_nearby": 0.143,
+      "is_weekend": 0.0026,
+      "historical_crime_index": 0.0605
+    }
+  },
+  "training_size": 15000,
+  "trained_on": "15000 simulated journeys blended with a REAL feature (historical_crime_index, 5-year avg 2008-2012) from actual NCRB government data; GridSearchCV cross-validated hyperparameter tuning."
+}

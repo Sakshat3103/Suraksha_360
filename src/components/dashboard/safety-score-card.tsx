@@ -2,12 +2,13 @@
 
 import * as React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, Sparkles, X } from "lucide-react";
+import { BrainCircuit, Check, ChevronDown, Sparkles, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { requestAI } from "@/lib/ai/client";
 import type { RiskResult } from "@/lib/risk-engine";
 import { scoreBand } from "@/lib/risk-engine";
+import { ML_MODEL_METRICS } from "@/lib/ml-safety-model";
 import { useT } from "@/lib/i18n/use-t";
 
 const RADIUS = 42;
@@ -18,6 +19,7 @@ export function SafetyScoreCard({ risk, destination }: { risk: RiskResult; desti
   const band = scoreBand(score);
   const [explanation, setExplanation] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(false);
+  const [showModelInfo, setShowModelInfo] = React.useState(false);
   const { t } = useT();
 
   React.useEffect(() => {
@@ -113,6 +115,49 @@ export function SafetyScoreCard({ risk, destination }: { risk: RiskResult; desti
             ) : (
               explanation
             )}
+          </div>
+
+          <div className="rounded-lg border border-brand-blue/20 bg-brand-blue/5">
+            <button
+              type="button"
+              onClick={() => setShowModelInfo((v) => !v)}
+              className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left"
+            >
+              <span className="flex items-center gap-1.5 text-xs font-medium text-brand-blue">
+                <BrainCircuit className="size-3.5" />
+                Powered by a trained ML model
+              </span>
+              <ChevronDown className={cn("size-3.5 text-brand-blue transition-transform", showModelInfo && "rotate-180")} />
+            </button>
+            <AnimatePresence initial={false}>
+              {showModelInfo && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="overflow-hidden"
+                >
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 px-3 pb-3 text-[11px] text-muted-foreground">
+                    <div>
+                      <span className="font-semibold text-foreground">{Math.round(ML_MODEL_METRICS.recall * 100)}%</span> risk-detection recall
+                    </div>
+                    <div>
+                      <span className="font-semibold text-foreground">{Math.round(ML_MODEL_METRICS.accuracy * 100)}%</span> test accuracy
+                    </div>
+                    <div>
+                      <span className="font-semibold text-foreground">{ML_MODEL_METRICS.rfR2.toFixed(2)}</span> R² (score regressor)
+                    </div>
+                    <div>
+                      <span className="font-semibold text-foreground">{ML_MODEL_METRICS.trainingSize.toLocaleString()}</span> training samples
+                    </div>
+                    <div className="col-span-2 pt-1 leading-relaxed">
+                      Logistic regression + random forest, cross-validated, blending a real NCRB
+                      (National Crime Records Bureau) crime-index feature with journey behavior signals.
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
       </CardContent>
