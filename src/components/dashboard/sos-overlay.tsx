@@ -35,7 +35,7 @@ function pickNearestGovtSafeHaven(zones: SafeZone[]): SafeZone | null {
   })[0];
 }
 
-const ESCALATION_SECONDS = 15;
+const ESCALATION_SECONDS = 10;
 
 // Full-screen SOS confirmation + escalation overlay. Triggered by any
 // silent-SOS gesture (double-tap, shake) or the manual SOS button. Voice
