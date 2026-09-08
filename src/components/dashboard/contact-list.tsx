@@ -52,17 +52,17 @@ export function ContactList() {
             <p className="text-xs text-muted-foreground">{c.relation}</p>
             <p className="mt-1 text-xs text-muted-foreground">{c.phone}</p>
             <div className="mt-2 flex items-center gap-2">
-              <a href={`tel:${c.phone}`}>
-                <Button variant="outline" size="sm" className="h-7 gap-1.5 px-2.5 text-xs">
+              <Button asChild variant="outline" size="sm" className="h-7 gap-1.5 px-2.5 text-xs">
+                <a href={`tel:${c.phone}`}>
                   <Phone className="size-3" /> Call
-                </Button>
-              </a>
-              {c.notify_sms && (
-                <a href={`sms:${c.phone}`}>
-                  <Button variant="outline" size="sm" className="h-7 gap-1.5 px-2.5 text-xs">
-                    <MessageSquareText className="size-3" /> SMS
-                  </Button>
                 </a>
+              </Button>
+              {c.notify_sms && (
+                <Button asChild variant="outline" size="sm" className="h-7 gap-1.5 px-2.5 text-xs">
+                  <a href={`sms:${c.phone}`}>
+                    <MessageSquareText className="size-3" /> SMS
+                  </a>
+                </Button>
               )}
             </div>
           </div>

@@ -179,17 +179,17 @@ export function SosOverlay() {
           {status === "escalated" && (
             <div className="flex w-full flex-col gap-2">
               {primaryContact && (
-                <a href={`tel:${primaryContact.phone}`}>
-                  <Button variant="destructive" size="lg" className="w-full">
+                <Button asChild variant="destructive" size="lg" className="w-full">
+                  <a href={`tel:${primaryContact.phone}`}>
                     <PhoneCall className="size-4" /> Call {primaryContact.name} now
-                  </Button>
-                </a>
-              )}
-              <a href="tel:112">
-                <Button variant={primaryContact ? "outline" : "destructive"} size="lg" className="w-full">
-                  <PhoneCall className="size-4" /> Call emergency services (112)
+                  </a>
                 </Button>
-              </a>
+              )}
+              <Button asChild variant={primaryContact ? "outline" : "destructive"} size="lg" className="w-full">
+                <a href="tel:112">
+                  <PhoneCall className="size-4" /> Call emergency services (112)
+                </a>
+              </Button>
 
               <div className="mt-1 flex flex-col gap-1.5 rounded-xl border border-brand-emerald/30 bg-brand-emerald/5 p-3 text-left">
                 <p className="flex items-center gap-1.5 text-xs font-semibold text-brand-emerald">
@@ -208,11 +208,11 @@ export function SosOverlay() {
                       </span>
                     </p>
                     {safeHavenReason && <p className="text-xs text-muted-foreground">{safeHavenReason}</p>}
-                    <a href={googleMapsDirectionsUrl(origin!, { lat: nearestSafeHaven.lat, lng: nearestSafeHaven.lng }, "walking")} target="_blank" rel="noreferrer">
-                      <Button variant="outline" size="sm" className="mt-1 w-full gap-1.5">
+                    <Button asChild variant="outline" size="sm" className="mt-1 w-full gap-1.5">
+                      <a href={googleMapsDirectionsUrl(origin!, { lat: nearestSafeHaven.lat, lng: nearestSafeHaven.lng }, "walking")} target="_blank" rel="noreferrer">
                         <Navigation2 className="size-3.5" /> Navigate there now
-                      </Button>
-                    </a>
+                      </a>
+                    </Button>
                   </>
                 ) : (
                   <p className="text-xs text-muted-foreground">No verified safe zone found nearby yet — call 112 for the fastest response.</p>
