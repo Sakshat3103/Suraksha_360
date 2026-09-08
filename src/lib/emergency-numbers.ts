@@ -1,11 +1,11 @@
-export interface EmergencyNumber { label: string; number: string; description: string; }
+export interface EmergencyNumber { labelKey: string; number: string; descKey: string; }
 
 export const EMERGENCY_NUMBERS: EmergencyNumber[] = [
-  { label: "National Emergency", number: "112", description: "All-in-one emergency response" },
-  { label: "Police", number: "100", description: "Nearest police station / patrol" },
-  { label: "Women's Helpline", number: "1091", description: "24x7 national helpline for women in distress" },
-  { label: "Ambulance", number: "108", description: "Free emergency medical response" },
-  { label: "Fire", number: "101", description: "Fire and rescue services" },
+  { labelKey: "emergency.nationalEmergency", number: "112", descKey: "emergency.nationalEmergencyDesc" },
+  { labelKey: "emergency.police", number: "100", descKey: "emergency.policeDesc" },
+  { labelKey: "emergency.womensHelpline", number: "1091", descKey: "emergency.womensHelplineDesc" },
+  { labelKey: "emergency.ambulance", number: "108", descKey: "emergency.ambulanceDesc" },
+  { labelKey: "emergency.fire", number: "101", descKey: "emergency.fireDesc" },
 ];
 
 export function telHref(number: string) { return `tel:${number}`; }
