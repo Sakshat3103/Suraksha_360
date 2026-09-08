@@ -10,20 +10,26 @@ import { fetchSafeZones, haversineMeters, type SafeZone } from "@/lib/geo";
 import { requestAI } from "@/lib/ai/client";
 import { computeSafetyScore } from "@/lib/risk-engine";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n/use-t";
 
 interface ChatMessage {
   role: "user" | "assistant";
   text: string;
 }
 
-const SUGGESTIONS = ["Am I safe?", "I'm being followed", "Find the nearest police station", "Suggest a safer route"];
-
 export function AICopilot() {
+  const { t } = useT();
+  const SUGGESTIONS = [
+    t("copilot.sugAmISafe"),
+    t("copilot.sugFollowed"),
+    t("copilot.sugNearestPolice"),
+    t("copilot.sugSaferRoute"),
+  ];
   const [open, setOpen] = React.useState(false);
   const [input, setInput] = React.useState("");
   const [sending, setSending] = React.useState(false);
   const [messages, setMessages] = React.useState<ChatMessage[]>([
-    { role: "assistant", text: "I'm your AI Safety Copilot. Ask me anything about your current journey, or say what's wrong." },
+    { role: "assistant", text: t("copilot.welcomeMessage") },
   ]);
   const [battery, setBattery] = React.useState<number | null>(null);
   const [safeZones, setSafeZones] = React.useState<SafeZone[]>([]);
@@ -121,9 +127,9 @@ export function AICopilot() {
                 <ShieldHalf className="size-4" />
               </span>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold">AI Safety Copilot</p>
+                <p className="text-sm font-semibold">{t("copilot.title")}</p>
                 <p className="text-[11px] text-muted-foreground">
-                  {status !== "idle" ? `Tracking journey to ${destination}` : "No active journey"}
+                  {status !== "idle" ? `${t("copilot.trackingJourney")} ${destination}` : t("copilot.noActiveJourney")}
                 </p>
               </div>
             </div>
@@ -144,7 +150,7 @@ export function AICopilot() {
               ))}
               {sending && (
                 <div className="flex items-center gap-1.5 self-start text-xs text-muted-foreground">
-                  <Loader2 className="size-3.5 animate-spin" /> Thinking…
+                  <Loader2 className="size-3.5 animate-spin" /> {t("copilot.thinking")}
                 </div>
               )}
             </div>
@@ -171,7 +177,7 @@ export function AICopilot() {
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask your Safety Copilot…"
+                placeholder={t("copilot.inputPlaceholder")}
                 className="flex-1 rounded-full border border-foreground/10 bg-foreground/[0.04] px-3.5 py-2 text-sm outline-none focus:border-brand-blue/50"
               />
               <Button type="submit" size="icon" variant="glow" disabled={sending}>

@@ -5,6 +5,7 @@ import { AlertTriangle, Flag, History, LifeBuoy, MapPin, ShieldAlert, Siren, Tre
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTimelineStore, type TimelineEvent } from "@/store/use-timeline-store";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n/use-t";
 
 const KIND_ICON: Record<TimelineEvent["kind"], typeof Flag> = {
   start: Flag,
@@ -23,18 +24,19 @@ function formatTime(iso: string) {
 
 export function JourneyTimeline() {
   const events = useTimelineStore((s) => s.events);
+  const { t } = useT();
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
           <History className="size-4.5 text-brand-blue" />
-          AI Journey Timeline
+          {t("timeline.title")}
         </CardTitle>
       </CardHeader>
       <CardContent>
         {events.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Start a journey to see a live, explainable timeline here.</p>
+          <p className="text-sm text-muted-foreground">{t("timeline.startToSee")}</p>
         ) : (
           <div className="relative flex flex-col gap-0">
             {events.map((e, idx) => {

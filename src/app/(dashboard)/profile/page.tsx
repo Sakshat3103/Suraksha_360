@@ -14,12 +14,14 @@ import { toast } from "sonner";
 import { useAuthStore } from "@/store/use-auth-store";
 import { updateProfileAction } from "@/lib/actions/profile";
 import { getInitials } from "@/lib/utils";
+import { useT } from "@/lib/i18n/use-t";
 
 export default function ProfilePage() {
   const profile = useAuthStore((s) => s.profile);
   const user = useAuthStore((s) => s.user);
   const setProfile = useAuthStore((s) => s.setProfile);
   const [isPending, startTransition] = React.useTransition();
+  const { t } = useT();
 
   const displayName = profile?.full_name || user?.email?.split("@")[0] || "Traveller";
 
@@ -59,9 +61,9 @@ export default function ProfilePage() {
             <h2 className="text-xl font-semibold">{displayName}</h2>
             <p className="text-sm text-muted-foreground">{user?.email}</p>
             <div className="flex gap-2">
-              <Badge variant="success">Verified traveller</Badge>
+              <Badge variant="success">{t("profile.verifiedTraveller")}</Badge>
               {user?.created_at && (
-                <Badge variant="secondary">Member since {new Date(user.created_at).getFullYear()}</Badge>
+                <Badge variant="secondary">{t("profile.memberSince")} {new Date(user.created_at).getFullYear()}</Badge>
               )}
             </div>
           </div>
@@ -70,30 +72,30 @@ export default function ProfilePage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Personal information</CardTitle>
-          <CardDescription>This is used for your emergency responder profile.</CardDescription>
+          <CardTitle>{t("profile.personalInfo")}</CardTitle>
+          <CardDescription>{t("profile.personalInfoDesc")}</CardDescription>
         </CardHeader>
         <CardContent>
           <form action={handleSubmit} className="flex flex-col gap-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="flex flex-col gap-2">
-                <Label htmlFor="full_name">Full name</Label>
+                <Label htmlFor="full_name">{t("profile.fullName")}</Label>
                 <Input id="full_name" name="full_name" defaultValue={profile?.full_name ?? ""} />
               </div>
               <div className="flex flex-col gap-2">
-                <Label htmlFor="phone">Phone number</Label>
+                <Label htmlFor="phone">{t("profile.phoneNumber")}</Label>
                 <Input id="phone" name="phone" type="tel" defaultValue={profile?.phone ?? ""} />
               </div>
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label htmlFor="city">City</Label>
+              <Label htmlFor="city">{t("profile.city")}</Label>
               <Input id="city" name="city" defaultValue={profile?.city ?? ""} placeholder="Jaipur" />
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label htmlFor="bio">About</Label>
-              <Textarea id="bio" name="bio" defaultValue={profile?.bio ?? ""} placeholder="A short note visible only to your trusted circle." />
+              <Label htmlFor="bio">{t("profile.about")}</Label>
+              <Textarea id="bio" name="bio" defaultValue={profile?.bio ?? ""} placeholder={t("profile.aboutPlaceholder")} />
             </div>
 
             <Separator />
@@ -101,7 +103,7 @@ export default function ProfilePage() {
             <div className="flex justify-end">
               <Button type="submit" variant="glow" disabled={isPending}>
                 {isPending ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
-                Save changes
+                {t("profile.saveChanges")}
               </Button>
             </div>
           </form>
