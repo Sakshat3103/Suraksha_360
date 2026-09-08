@@ -66,3 +66,28 @@ User asked: "${c.message}"
 
 Reply in under 45 words, in second person, with one concrete instruction or answer. If they express distress ("I'm being followed", "I feel unsafe"), prioritize immediate concrete safety actions over commentary.`;
 }
+
+export interface EmergencyVoiceInput {
+  transcript: string;
+}
+
+export interface EmergencyVoiceResult {
+  emergency: boolean;
+  confidence: number;
+  category: "harassment" | "stalking" | "kidnapping" | "assault" | "panic" | "medical" | "accident" | "unknown";
+}
+
+export function emergencyVoicePrompt(i: EmergencyVoiceInput) {
+  return `You are an emergency-detection classifier inside a women's safety app. You will be given a short spoken transcript captured from a phone microphone. Decide whether it indicates the speaker may be in physical danger or distress right now.
+
+Transcript: "${i.transcript}"
+
+Respond with ONLY a single-line JSON object, no markdown, no explanation, in exactly this shape:
+{"emergency": true or false, "confidence": a number between 0 and 1, "category": one of "harassment", "stalking", "kidnapping", "assault", "panic", "medical", "accident", "unknown"}
+
+Guidance:
+- Treat direct distress phrases ("help me", "someone is following me", "call the police", "I'm scared", "let me go") as strong emergency signals with high confidence.
+- Ordinary conversation, test phrases, or unrelated speech should get emergency: false with low confidence.
+- If genuinely ambiguous, prefer a lower confidence rather than guessing high.
+- category should reflect the best-matching danger type even when emergency is false (use "unknown" if nothing fits).`;
+}

@@ -1,7 +1,7 @@
 import { create } from "zustand";
 
 export type SosStatus = "idle" | "triggered" | "escalated" | "resolved";
-export type SosTrigger = "manual" | "double-tap" | "shake" | "being-followed";
+export type SosTrigger = "manual" | "double-tap" | "shake" | "being-followed" | "voice-detected";
 
 interface SosState {
   status: SosStatus;

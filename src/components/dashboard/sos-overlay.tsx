@@ -124,6 +124,7 @@ export function SosOverlay() {
     "double-tap": "Double-tap SOS",
     shake: "Shake SOS",
     "being-followed": "I'm being followed",
+    "voice-detected": "AI detected an emergency in your voice",
   };
 
   return (

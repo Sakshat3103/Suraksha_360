@@ -89,3 +89,29 @@ export function mockCopilotReply(c: CopilotContext): string {
     c.safetyScore !== null ? ` — current safety score ${c.safetyScore}/100` : ""
   }. Ask me things like "Am I safe?", "Find the nearest police station", or "I'm being followed".`;
 }
+
+// Simple keyword-based fallback classifier for the Emergency Voice
+// Detector when Gemini isn't configured. Deliberately conservative — real
+// classification is Gemini's job; this just keeps the feature demoable
+// offline without ever silently doing nothing.
+const EMERGENCY_KEYWORDS: { pattern: RegExp; category: import("./prompts").EmergencyVoiceResult["category"]; confidence: number }[] = [
+  { pattern: /kidnap|abduct/i, category: "kidnapping", confidence: 0.93 },
+  { pattern: /rape|assault|attack(ing|ed)?|hit(ting)? me|hurting me/i, category: "assault", confidence: 0.92 },
+  { pattern: /follow(ing|ed)? me|stalk/i, category: "stalking", confidence: 0.88 },
+  { pattern: /harass|touching me|inappropriate/i, category: "harassment", confidence: 0.85 },
+  { pattern: /heart attack|can't breathe|cant breathe|bleeding|unconscious|faint(ed|ing)?/i, category: "medical", confidence: 0.87 },
+  { pattern: /accident|crash(ed)?|fell down|fallen/i, category: "accident", confidence: 0.8 },
+  { pattern: /help me|save me|somebody help|please help/i, category: "panic", confidence: 0.86 },
+  { pattern: /\bsos\b|emergency|danger|scared|terrified|panic|crying/i, category: "panic", confidence: 0.82 },
+];
+
+export function mockEmergencyVoiceClassification(
+  input: import("./prompts").EmergencyVoiceInput
+): import("./prompts").EmergencyVoiceResult {
+  for (const { pattern, category, confidence } of EMERGENCY_KEYWORDS) {
+    if (pattern.test(input.transcript)) {
+      return { emergency: true, confidence, category };
+    }
+  }
+  return { emergency: false, confidence: 0.1, category: "unknown" };
+}
