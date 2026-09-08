@@ -7,7 +7,7 @@ import { useTheme } from "next-themes";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { AuthorityMap } from "@/components/authority/authority-map";
+import { AuthorityMapClient } from "@/components/authority/authority-map-client";
 import { EmergencyNumbersCard } from "@/components/dashboard/emergency-numbers-card";
 import { useAuthorityStore } from "@/store/use-authority-store";
 import { useAuthorityFeedStore } from "@/store/use-authority-feed-store";
@@ -120,7 +120,7 @@ export default function AuthorityDashboardPage() {
       <div className="grid gap-6 lg:grid-cols-[1.3fr_1fr]">
         <Card>
           <CardHeader><CardTitle className="text-base">Area map</CardTitle><CardDescription>Anonymized IDs only — an officer never sees a raw name here.</CardDescription></CardHeader>
-          <CardContent><AuthorityMap travellers={travellers} center={MUJ_AREA_CENTER} /></CardContent>
+          <CardContent><AuthorityMapClient travellers={travellers} center={MUJ_AREA_CENTER} /></CardContent>
         </Card>
 
         <Card>
