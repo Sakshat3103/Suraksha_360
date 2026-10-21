@@ -195,7 +195,7 @@ export function JourneyCard() {
       abnormalStopAlertedRef.current = true;
       addTimelineEvent(
         `Abnormal stop detected — stationary for ${Math.round(tracking.unexpectedStopSeconds / 60)} min`,
-        "risk",
+        "stop",
         riskResult.score
       );
       toast.warning("Unexpected stop detected — you've been stationary for several minutes");

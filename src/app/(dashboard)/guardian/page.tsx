@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RouteMapClient } from "@/components/dashboard/route-map-client";
 import { JourneyTimeline } from "@/components/dashboard/journey-timeline";
 import { useJourneyStore } from "@/store/use-journey-store";
+import { useJourneyTracking } from "@/hooks/use-journey-tracking";
 import { useTimelineStore } from "@/store/use-timeline-store";
 import { computeSafetyScore, scoreBand } from "@/lib/risk-engine";
 import { cn } from "@/lib/utils";
@@ -26,6 +27,12 @@ export default function GuardianPage() {
     return () => clearInterval(interval);
   }, []);
 
+  // The same live-GPS tracking the traveller's own Safe Journey card uses —
+  // this is what makes this screen a genuine "what my guardian sees" view
+  // rather than a static snapshot: the dot actually moves, and the risk
+  // score below reacts to real route deviation / stop time, not zeros.
+  const tracking = useJourneyTracking(status === "active" || status === "escalated", route?.path);
+
   const risk = React.useMemo(() => {
     if (!route) return null;
     return computeSafetyScore({
@@ -34,14 +41,14 @@ export default function GuardianPage() {
       totalDistanceMeters: 1000,
       elapsedSeconds: 0,
       expectedDurationSeconds: route.durationSeconds,
-      routeDeviationMeters: 0,
-      unexpectedStopSeconds: 0,
+      routeDeviationMeters: tracking.routeDeviationMeters,
+      unexpectedStopSeconds: tracking.unexpectedStopSeconds,
       nearbySafeZoneCount: 1,
       nearbyPoliceOrHospital: false,
       communityReportsNearby: 0,
       isEscalated: status === "escalated",
     });
-  }, [route, now, status]);
+  }, [route, now, status, tracking.routeDeviationMeters, tracking.unexpectedStopSeconds]);
 
   const alerts = React.useMemo(() => events.filter((e) => e.kind === "guardian" || e.kind === "deviation" || e.kind === "stop"), [events]);
 
@@ -96,6 +103,8 @@ export default function GuardianPage() {
                 <RouteMapClient
                   origin={{ lat: route.originLat, lng: route.originLng }}
                   destination={{ lat: route.destinationLat, lng: route.destinationLng }}
+                  path={route.path}
+                  liveMarker={tracking.position}
                   height={260}
                 />
                 <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-muted-foreground">
@@ -103,7 +112,11 @@ export default function GuardianPage() {
                     <TimerReset className="size-3.5" /> {t("guardian.lastUpdated")} {now.toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" })}
                   </span>
                   <span>{t("guardian.mode")}: {mode ?? "—"}</span>
-                  <span>{t("guardian.currentSpeed")}: {mode === "walking" ? "~4.5 km/h" : "~18 km/h"} (est.)</span>
+                  <span>
+                    {tracking.position
+                      ? `Off planned route by ${Math.round(tracking.routeDeviationMeters)}m`
+                      : "Waiting for live GPS fix…"}
+                  </span>
                 </div>
               </CardContent>
             </Card>

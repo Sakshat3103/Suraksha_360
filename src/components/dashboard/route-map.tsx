@@ -41,6 +41,15 @@ const destinationIcon = L.divIcon({
   iconAnchor: [7, 7],
 });
 
+// A traveller's actual live GPS fix, distinct from the frozen journey-start
+// "origin" marker above — this is the one that moves as new fixes arrive.
+const liveMarkerIcon = L.divIcon({
+  className: "",
+  html: `<div style="width:16px;height:16px;border-radius:999px;background:#FF5C7C;border:2px solid white;box-shadow:0 0 0 4px rgba(255,92,124,0.3)" class="animate-pulse"></div>`,
+  iconSize: [16, 16],
+  iconAnchor: [8, 8],
+});
+
 // Built imperatively (rather than via react-leaflet's <MapContainer>) because
 // Next.js dev mode double-mounts client components, and react-leaflet throws
 // "Map container is already initialized" when that happens. Managing the
@@ -52,17 +61,25 @@ export function RouteMap({
   path,
   height = 220,
   safeZones,
+  liveMarker,
 }: {
   origin: GeoPoint;
   destination?: GeoPoint;
   path?: GeoPoint[];
   height?: number;
   safeZones?: SafeZone[];
+  // The traveller's actual, currently-reporting GPS fix (from
+  // useJourneyTracking) — rendered as its own pulsing marker separate from
+  // the fixed journey-start point, so a viewer (guardian / authority
+  // screen) sees where the person actually is right now, not just where
+  // they started.
+  liveMarker?: GeoPoint | null;
 }) {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const mapRef = React.useRef<L.Map | null>(null);
   const originMarkerRef = React.useRef<L.Marker | null>(null);
   const destinationMarkerRef = React.useRef<L.Marker | null>(null);
+  const liveMarkerRef = React.useRef<L.Marker | null>(null);
   const lineRef = React.useRef<L.Polyline | null>(null);
   const safeZoneMarkersRef = React.useRef<L.Marker[]>([]);
 
@@ -105,6 +122,7 @@ export function RouteMap({
       lineRef.current = null;
       safeZoneMarkersRef.current.forEach((m) => m.remove());
       safeZoneMarkersRef.current = [];
+      liveMarkerRef.current = null;
       if (withId._leaflet_id) withId._leaflet_id = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -165,6 +183,31 @@ export function RouteMap({
 
     map.fitBounds(L.latLngBounds(points), { padding: [32, 32] });
   }, [origin, destination, path]);
+
+  // Live GPS marker — created once a fix arrives, then just moved on every
+  // subsequent update rather than recreated, so it reads as one dot
+  // traveling rather than a flicker of new markers.
+  React.useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    if (!liveMarker) {
+      liveMarkerRef.current?.remove();
+      liveMarkerRef.current = null;
+      return;
+    }
+
+    if (liveMarkerRef.current) {
+      liveMarkerRef.current.setLatLng([liveMarker.lat, liveMarker.lng]);
+    } else {
+      liveMarkerRef.current = L.marker([liveMarker.lat, liveMarker.lng], {
+        icon: liveMarkerIcon,
+        zIndexOffset: 1000,
+      })
+        .bindTooltip("Live position", { direction: "top", offset: [0, -10] })
+        .addTo(map);
+    }
+  }, [liveMarker]);
 
   // Verified safe-zone markers (hospitals, police, temples, colleges,
   // hotels, metro stations, fuel stations, stores)

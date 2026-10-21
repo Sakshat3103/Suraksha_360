@@ -110,12 +110,18 @@ export function SosOverlay() {
     smsSentForTriggerRef.current = triggeredAt;
 
     toast.error("SOS escalated — your trusted circle has been alerted with your live location");
-    // Anonymous packet to the (mock) government control room — no name,
-    // phone, or contact details, only rough location + risk for triage.
+    // Anonymous packet to the (mock) government control room — genuinely
+    // anonymized: no name, destination, phone, or contact details, only a
+    // coarse ~1km grid sector (never the exact fix) and a risk score, which
+    // is all a real triage desk needs to decide where to send a patrol.
+    const lat = liveOrigin?.lat ?? route?.originLat ?? 26.8408;
+    const lng = liveOrigin?.lng ?? route?.originLng ?? 75.5581;
+    const sectorLat = Math.round(lat * 100) / 100;
+    const sectorLng = Math.round(lng * 100) / 100;
     addPacket({
-      areaLabel: destination ? `Near ${destination}` : "Unknown area",
-      lat: route?.originLat ?? 26.8408,
-      lng: route?.originLng ?? 75.5581,
+      areaLabel: `Sector ${sectorLat.toFixed(2)}N / ${sectorLng.toFixed(2)}E`,
+      lat,
+      lng,
       riskScore: 92,
     });
 

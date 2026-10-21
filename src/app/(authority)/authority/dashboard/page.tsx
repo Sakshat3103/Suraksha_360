@@ -12,6 +12,7 @@ import { EmergencyNumbersCard } from "@/components/dashboard/emergency-numbers-c
 import { useAuthorityStore } from "@/store/use-authority-store";
 import { useAuthorityFeedStore } from "@/store/use-authority-feed-store";
 import { useJourneyStore } from "@/store/use-journey-store";
+import { useJourneyTracking } from "@/hooks/use-journey-tracking";
 import { MOCK_TRACKED_TRAVELLERS, STATUS_META, type TrackedTraveller } from "@/lib/mock-authority-data";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n/use-t";
@@ -24,9 +25,16 @@ export default function AuthorityDashboardPage() {
   const officerId = useAuthorityStore((s) => s.officerId);
   const logout = useAuthorityStore((s) => s.logout);
   const { theme, setTheme } = useTheme();
-  const { status: journeyStatus, route, destination } = useJourneyStore();
+  const { status: journeyStatus, route } = useJourneyStore();
   const packets = useAuthorityFeedStore((s) => s.packets);
   const { t } = useT();
+
+  // Same real live-GPS + route-deviation / abnormal-stop tracking the
+  // traveller's own app and the Guardian screen use — so this "anonymized"
+  // control-room dot genuinely moves and genuinely reflects live anomalies,
+  // instead of sitting frozen at the journey's start point.
+  const active = journeyStatus === "active" || journeyStatus === "escalated";
+  const tracking = useJourneyTracking(active, route?.path);
 
   React.useEffect(() => {
     if (!isAuthed) router.replace("/authority/login");
@@ -35,19 +43,29 @@ export default function AuthorityDashboardPage() {
   const travellers: TrackedTraveller[] = React.useMemo(() => {
     const list = [...MOCK_TRACKED_TRAVELLERS];
     // Fold the real, currently-active journey (if any) into the same feed —
-    // anonymized, since a real control room shouldn't see a raw user name.
-    if (journeyStatus !== "idle" && route) {
+    // anonymized, since a real control room shouldn't see a raw user name,
+    // only an opaque id and its live position/status.
+    if (active && route) {
+      const livePosition = tracking.position ?? { lat: route.originLat, lng: route.originLng };
+      const status: TrackedTraveller["status"] =
+        journeyStatus === "escalated"
+          ? "escalated"
+          : tracking.hadAbnormalStopAlert
+            ? "overdue"
+            : tracking.hadRouteDeviationAlert
+              ? "deviated"
+              : "normal";
       list.unshift({
         id: "LIVE",
-        label: `Live journey — ${destination ?? "unknown destination"}`,
-        position: { lat: route.originLat, lng: route.originLng },
-        status: journeyStatus === "escalated" ? "escalated" : "normal",
+        label: "Unverified signal — LIVE",
+        position: livePosition,
+        status,
         mode: "live",
-        lastPing: "just now",
+        lastPing: tracking.position ? "just now" : "awaiting GPS fix",
       });
     }
     return list;
-  }, [journeyStatus, route, destination]);
+  }, [active, route, tracking.position, tracking.hadAbnormalStopAlert, tracking.hadRouteDeviationAlert, journeyStatus]);
 
   const flagged = travellers.filter((t) => t.status !== "normal");
 
