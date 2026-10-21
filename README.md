@@ -1,6 +1,7 @@
 # Suraksha360
 
 AI-powered urban safety platform — landing site, authentication, and dashboard shell.
+Access the project using this link:https://suraksha-360-m9okfjsfq-sakshat3103s-projects.vercel.app/login?redirectTo=%2Fdashboard
 
 ## Stack
 
