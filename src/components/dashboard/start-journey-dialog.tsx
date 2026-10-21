@@ -165,6 +165,7 @@ export function StartJourneyDialog({
         originLng: origin.lng,
         destinationLat: destination.lat,
         destinationLng: destination.lng,
+        path: result?.path,
       });
       setComputing(false);
     })();
@@ -184,7 +185,7 @@ export function StartJourneyDialog({
 
   function handleStart() {
     if (!route) return;
-    startJourney(route.destinationLabel, mode, route);
+    startJourney(route.destinationLabel, mode, { ...route, path });
     toast.success("Safe Journey started — your circle has been notified");
     onOpenChange(false);
     resetState();

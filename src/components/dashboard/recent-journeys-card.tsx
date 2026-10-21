@@ -1,11 +1,14 @@
 "use client";
 
-import { AlertOctagon, History } from "lucide-react";
+import * as React from "react";
+import { AlertOctagon, History, MapPinned, ShieldAlert, TimerReset } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useJourneyStore } from "@/store/use-journey-store";
+import { Button } from "@/components/ui/button";
+import { useJourneyStore, selectEmergencyJourneys } from "@/store/use-journey-store";
 import { translate } from "@/lib/i18n/dictionary";
 import type { LocaleCode } from "@/store/use-locale-store";
 import { useT } from "@/lib/i18n/use-t";
+import { cn } from "@/lib/utils";
 
 const MODE_LABEL_KEY: Record<string, string> = {
   walking: "dashboard.modeWalking",
@@ -34,26 +37,45 @@ function formatWhen(iso: string, locale: LocaleCode) {
 export function RecentJourneysCard() {
   const history = useJourneyStore((s) => s.history);
   const { t, locale } = useT();
+  const [emergencyOnly, setEmergencyOnly] = React.useState(false);
+
+  const emergencyJourneys = React.useMemo(() => selectEmergencyJourneys(history), [history]);
+  const visible = emergencyOnly ? emergencyJourneys : history;
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="flex-row items-center justify-between">
         <CardTitle className="text-base">{t("dashboard.recentJourneys")}</CardTitle>
+        {emergencyJourneys.length > 0 && (
+          <Button
+            variant={emergencyOnly ? "destructive" : "outline"}
+            size="sm"
+            className="h-7 gap-1.5 px-2.5 text-xs"
+            onClick={() => setEmergencyOnly((v) => !v)}
+          >
+            <ShieldAlert className="size-3.5" />
+            {emergencyOnly ? "All journeys" : `Emergency journeys (${emergencyJourneys.length})`}
+          </Button>
+        )}
       </CardHeader>
       <CardContent>
-        {history.length === 0 ? (
+        {visible.length === 0 ? (
           <div className="flex flex-col items-center gap-2 py-6 text-center">
             <span className="flex size-10 items-center justify-center rounded-xl bg-foreground/[0.06] text-muted-foreground">
               <History className="size-4.5" />
             </span>
-            <p className="text-sm font-medium">{t("dashboard.noJourneysYet")}</p>
+            <p className="text-sm font-medium">
+              {emergencyOnly ? "No emergency journeys" : t("dashboard.noJourneysYet")}
+            </p>
             <p className="max-w-xs text-xs text-muted-foreground">
-              {t("dashboard.noJourneysDesc")}
+              {emergencyOnly
+                ? "Journeys with a route-deviation or abnormal-stop alert will show up here."
+                : t("dashboard.noJourneysDesc")}
             </p>
           </div>
         ) : (
           <div className="flex flex-col divide-y divide-white/10">
-            {history.map((j) => (
+            {visible.map((j) => (
               <div key={j.id} className="flex items-center justify-between py-3.5 first:pt-0 last:pb-0">
                 <div>
                   <p className="flex items-center gap-1.5 text-sm font-medium">
@@ -63,12 +85,31 @@ export function RecentJourneysCard() {
                   <p className="text-xs text-muted-foreground">
                     {MODE_LABEL_KEY[j.mode] ? t(MODE_LABEL_KEY[j.mode]) : j.mode} · {j.distanceText} · {formatWhen(j.completedAt, locale)}
                   </p>
+                  {j.emergencyFlags.length > 0 && (
+                    <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                      {j.emergencyFlags.includes("route-deviation") && (
+                        <span className="flex items-center gap-1 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-300">
+                          <MapPinned className="size-3" /> Route deviation
+                        </span>
+                      )}
+                      {j.emergencyFlags.includes("abnormal-stop") && (
+                        <span className="flex items-center gap-1 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-300">
+                          <TimerReset className="size-3" /> Abnormal stop
+                        </span>
+                      )}
+                      {j.emergencyFlags.includes("escalated") && (
+                        <span className="flex items-center gap-1 rounded-full bg-destructive/15 px-1.5 py-0.5 text-[10px] font-medium text-destructive">
+                          <AlertOctagon className="size-3" /> Escalated
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <span
-                  className={
-                    "text-sm font-semibold " +
-                    (j.safetyScore >= 75 ? "text-brand-emerald" : "text-amber-300")
-                  }
+                  className={cn(
+                    "text-sm font-semibold",
+                    j.safetyScore >= 75 ? "text-brand-emerald" : "text-amber-300"
+                  )}
                 >
                   {j.safetyScore}/100
                 </span>

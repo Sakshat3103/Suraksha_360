@@ -13,11 +13,12 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { useJourneyStore } from "@/store/use-journey-store";
+import { useJourneyStore, type EmergencyFlag } from "@/store/use-journey-store";
 import { useSosStore } from "@/store/use-sos-store";
 import { useTimelineStore } from "@/store/use-timeline-store";
 import { useCommunityStore } from "@/store/use-community-store";
 import { StartJourneyDialog } from "@/components/dashboard/start-journey-dialog";
+import { useJourneyTracking } from "@/hooks/use-journey-tracking";
 import { RouteMapClient } from "@/components/dashboard/route-map-client";
 import { SafetyScoreCard } from "@/components/dashboard/safety-score-card";
 import { SafeHavenCard } from "@/components/dashboard/safe-haven-card";
@@ -63,6 +64,8 @@ export function JourneyCard() {
   const prevStatusRef = React.useRef(status);
   const lastLoggedScoreRef = React.useRef<number | null>(null);
   const guardianNotifiedRef = React.useRef(false);
+  const deviationAlertedRef = React.useRef(false);
+  const abnormalStopAlertedRef = React.useRef(false);
 
   React.useEffect(() => {
     if (status !== "active" || !route) return;
@@ -96,6 +99,8 @@ export function JourneyCard() {
       addTimelineEvent(`Journey started to ${destination}`, "start");
       lastLoggedScoreRef.current = null;
       guardianNotifiedRef.current = false;
+      deviationAlertedRef.current = false;
+      abnormalStopAlertedRef.current = false;
     }
     if (prev !== "idle" && status === "idle") {
       addTimelineEvent("Reached destination", "end");
@@ -118,6 +123,13 @@ export function JourneyCard() {
     ).length;
   }, [communityReports, route]);
 
+  // Real live-GPS tracking for this journey: route-deviation distance from
+  // the planned polyline, and how long the traveller has sat in one spot —
+  // see src/hooks/use-journey-tracking.ts. Feeds the safety score and
+  // emergency detector with real signals instead of placeholders.
+  const tracking = useJourneyTracking(status === "active" || status === "escalated", route?.path);
+  const effectiveRouteDeviationMeters = Math.max(tracking.routeDeviationMeters, reroute ? 500 : 0);
+
   const riskResult = React.useMemo(() => {
     if (!route) return null;
     return computeSafetyScore({
@@ -126,14 +138,14 @@ export function JourneyCard() {
       totalDistanceMeters: 1000,
       elapsedSeconds,
       expectedDurationSeconds: totalDemoSeconds,
-      routeDeviationMeters: reroute ? 500 : 0,
-      unexpectedStopSeconds: 0,
+      routeDeviationMeters: effectiveRouteDeviationMeters,
+      unexpectedStopSeconds: tracking.unexpectedStopSeconds,
       nearbySafeZoneCount: safeZones.length,
       nearbyPoliceOrHospital: safeZones.some((z) => z.category === "police" || z.category === "hospital"),
       communityReportsNearby,
       isEscalated: status === "escalated",
     });
-  }, [route, progressValue, elapsedSeconds, totalDemoSeconds, reroute, safeZones, communityReportsNearby, status]);
+  }, [route, progressValue, elapsedSeconds, totalDemoSeconds, effectiveRouteDeviationMeters, tracking.unexpectedStopSeconds, safeZones, communityReportsNearby, status]);
 
   React.useEffect(() => {
     if (!riskResult || status === "idle") return;
@@ -148,8 +160,8 @@ export function JourneyCard() {
     }
 
     const emergency = computeEmergencyLevel({
-      unexpectedStopSeconds: 0,
-      routeDeviationMeters: reroute ? 500 : 0,
+      unexpectedStopSeconds: tracking.unexpectedStopSeconds,
+      routeDeviationMeters: effectiveRouteDeviationMeters,
       communityReportsNearby,
       isEscalated: status === "escalated",
       manualSosActive: sosStatus === "triggered" || sosStatus === "escalated",
@@ -164,8 +176,32 @@ export function JourneyCard() {
     if (!emergency.autoNotifyGuardian) {
       guardianNotifiedRef.current = false;
     }
+
+    // Distinct, specific alerts for the two live-tracking anomalies — the
+    // generic "Emergency risk" banner above covers the combined score, but
+    // a route deviation and an abnormal stop are each worth their own call-
+    // out the moment they first cross the threshold (not repeated every
+    // tick after that).
+    if (tracking.hadRouteDeviationAlert && !deviationAlertedRef.current) {
+      deviationAlertedRef.current = true;
+      addTimelineEvent(
+        `Route deviation detected — ${Math.round(effectiveRouteDeviationMeters)}m off the planned route`,
+        "deviation",
+        riskResult.score
+      );
+      toast.warning("Route deviation alert — you've moved off your planned route");
+    }
+    if (tracking.hadAbnormalStopAlert && !abnormalStopAlertedRef.current) {
+      abnormalStopAlertedRef.current = true;
+      addTimelineEvent(
+        `Abnormal stop detected — stationary for ${Math.round(tracking.unexpectedStopSeconds / 60)} min`,
+        "risk",
+        riskResult.score
+      );
+      toast.warning("Unexpected stop detected — you've been stationary for several minutes");
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [riskResult, status, sosStatus, reroute, communityReportsNearby]);
+  }, [riskResult, status, sosStatus, effectiveRouteDeviationMeters, communityReportsNearby, tracking.unexpectedStopSeconds, tracking.hadRouteDeviationAlert, tracking.hadAbnormalStopAlert]);
 
   async function handleBeingFollowed() {
     if (!route) return;
@@ -191,6 +227,13 @@ export function JourneyCard() {
       toast.error("No verified safe zone found nearby — call your emergency contact directly");
     }
     setFindingSafeZone(false);
+  }
+
+  function journeyEmergencyFlags(): EmergencyFlag[] {
+    const flags: EmergencyFlag[] = [];
+    if (tracking.hadRouteDeviationAlert) flags.push("route-deviation");
+    if (tracking.hadAbnormalStopAlert) flags.push("abnormal-stop");
+    return flags;
   }
 
   const displayDestination = reroute
@@ -303,7 +346,7 @@ export function JourneyCard() {
                   className="flex-1"
                   onClick={() => {
                     setReroute(null);
-                    endJourney();
+                    endJourney(journeyEmergencyFlags());
                   }}
                 >
                   <ShieldCheck className="size-4" /> {t("dashboard.reachedSafely")}
@@ -313,7 +356,7 @@ export function JourneyCard() {
                   className="flex-1"
                   onClick={() => {
                     setReroute(null);
-                    endJourney();
+                    endJourney(journeyEmergencyFlags());
                   }}
                 >
                   {t("dashboard.endJourney")}

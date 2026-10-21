@@ -400,6 +400,43 @@ export function haversineMeters(a: GeoPoint, b: GeoPoint) {
   return 2 * R * Math.asin(Math.sqrt(h));
 }
 
+// Shortest distance from a live GPS fix to the planned route polyline —
+// the real signal behind "route deviation" alerts. Projects the point onto
+// each path segment (equirectangular flat-earth approximation, accurate
+// enough at city scale) and keeps the smallest distance found; falls back
+// to the straight-line distance to the nearest path point when the path is
+// missing or too short to form a segment.
+export function distanceToPathMeters(point: GeoPoint, path: GeoPoint[] | undefined): number {
+  if (!path || path.length === 0) return 0;
+  if (path.length === 1) return haversineMeters(point, path[0]);
+
+  const latRad = (point.lat * Math.PI) / 180;
+  const mPerDegLat = 111320;
+  const mPerDegLng = 111320 * Math.cos(latRad);
+
+  const toXY = (p: GeoPoint) => ({
+    x: (p.lng - point.lng) * mPerDegLng,
+    y: (p.lat - point.lat) * mPerDegLat,
+  });
+  const px = toXY(point); // always (0, 0) by construction
+
+  let min = Infinity;
+  for (let i = 0; i < path.length - 1; i++) {
+    const a = toXY(path[i]);
+    const b = toXY(path[i + 1]);
+    const abx = b.x - a.x;
+    const aby = b.y - a.y;
+    const lenSq = abx * abx + aby * aby;
+    let t = lenSq === 0 ? 0 : ((px.x - a.x) * abx + (px.y - a.y) * aby) / lenSq;
+    t = Math.max(0, Math.min(1, t));
+    const projX = a.x + t * abx;
+    const projY = a.y + t * aby;
+    const dist = Math.hypot(px.x - projX, px.y - projY);
+    if (dist < min) min = dist;
+  }
+  return min;
+}
+
 export function formatDistance(meters: number) {
   return meters >= 1000 ? `${(meters / 1000).toFixed(1)} km` : `${Math.round(meters)} m`;
 }
