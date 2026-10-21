@@ -26,6 +26,17 @@ export interface JourneyTrackingResult {
   // a deviation alert, not only while it was actively happening.
   hadRouteDeviationAlert: boolean;
   hadAbnormalStopAlert: boolean;
+  // The exact moment (ISO timestamp) each alert FIRST crossed its
+  // threshold — this is the real "at what time was it triggered" record,
+  // not just a yes/no flag. Null until it has actually happened once.
+  routeDeviationAlertAt: string | null;
+  abnormalStopAlertAt: string | null;
+  // A short human-readable detail captured at the moment each alert first
+  // fired (e.g. "187m off route", "stationary for 6 min") — frozen at
+  // trigger time, not live-updating, so a retrieved journey shows what was
+  // true when the alert actually happened.
+  routeDeviationDetail: string | null;
+  abnormalStopDetail: string | null;
 }
 
 export function useJourneyTracking(
@@ -40,8 +51,10 @@ export function useJourneyTracking(
 
   const [routeDeviationMeters, setRouteDeviationMeters] = React.useState(0);
   const [unexpectedStopSeconds, setUnexpectedStopSeconds] = React.useState(0);
-  const [hadRouteDeviationAlert, setHadRouteDeviationAlert] = React.useState(false);
-  const [hadAbnormalStopAlert, setHadAbnormalStopAlert] = React.useState(false);
+  const [routeDeviationAlertAt, setRouteDeviationAlertAt] = React.useState<string | null>(null);
+  const [abnormalStopAlertAt, setAbnormalStopAlertAt] = React.useState<string | null>(null);
+  const [routeDeviationDetail, setRouteDeviationDetail] = React.useState<string | null>(null);
+  const [abnormalStopDetail, setAbnormalStopDetail] = React.useState<string | null>(null);
 
   const stoppedSinceRef = React.useRef<{ anchor: GeoPoint; since: number } | null>(null);
 
@@ -53,8 +66,10 @@ export function useJourneyTracking(
       // eslint-disable-next-line react-hooks/set-state-in-effect -- resetting tracking state between journeys
       setRouteDeviationMeters(0);
       setUnexpectedStopSeconds(0);
-      setHadRouteDeviationAlert(false);
-      setHadAbnormalStopAlert(false);
+      setRouteDeviationAlertAt(null);
+      setAbnormalStopAlertAt(null);
+      setRouteDeviationDetail(null);
+      setAbnormalStopDetail(null);
       stoppedSinceRef.current = null;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -66,7 +81,10 @@ export function useJourneyTracking(
     const deviation = distanceToPathMeters(position, path);
     // eslint-disable-next-line react-hooks/set-state-in-effect -- synchronizing to a fresh GPS fix from the browser's geolocation API, an external system
     setRouteDeviationMeters(deviation);
-    if (deviation >= deviationAlertMeters) setHadRouteDeviationAlert(true);
+    if (deviation >= deviationAlertMeters) {
+      setRouteDeviationAlertAt((prev) => prev ?? new Date().toISOString());
+      setRouteDeviationDetail((prev) => prev ?? `${Math.round(deviation)}m off the planned route`);
+    }
 
     const stopped = stoppedSinceRef.current;
     if (!stopped || haversineMeters(position, stopped.anchor) > STOPPED_RADIUS_METERS) {
@@ -75,7 +93,10 @@ export function useJourneyTracking(
     } else {
       const seconds = Math.round((Date.now() - stopped.since) / 1000);
       setUnexpectedStopSeconds(seconds);
-      if (seconds >= stopAlertSeconds) setHadAbnormalStopAlert(true);
+      if (seconds >= stopAlertSeconds) {
+        setAbnormalStopAlertAt((prev) => prev ?? new Date().toISOString());
+        setAbnormalStopDetail((prev) => prev ?? `stationary for ${Math.round(seconds / 60)} min`);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [position, active, path]);
@@ -91,7 +112,10 @@ export function useJourneyTracking(
       if (!stopped) return;
       const seconds = Math.round((Date.now() - stopped.since) / 1000);
       setUnexpectedStopSeconds(seconds);
-      if (seconds >= stopAlertSeconds) setHadAbnormalStopAlert(true);
+      if (seconds >= stopAlertSeconds) {
+        setAbnormalStopAlertAt((prev) => prev ?? new Date().toISOString());
+        setAbnormalStopDetail((prev) => prev ?? `stationary for ${Math.round(seconds / 60)} min`);
+      }
     }, 1000);
     return () => clearInterval(interval);
   }, [active, stopAlertSeconds]);
@@ -101,7 +125,11 @@ export function useJourneyTracking(
     isLive,
     routeDeviationMeters,
     unexpectedStopSeconds,
-    hadRouteDeviationAlert,
-    hadAbnormalStopAlert,
+    hadRouteDeviationAlert: routeDeviationAlertAt !== null,
+    hadAbnormalStopAlert: abnormalStopAlertAt !== null,
+    routeDeviationAlertAt,
+    abnormalStopAlertAt,
+    routeDeviationDetail,
+    abnormalStopDetail,
   };
 }

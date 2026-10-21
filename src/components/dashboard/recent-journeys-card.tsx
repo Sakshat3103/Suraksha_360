@@ -32,6 +32,16 @@ function formatWhen(iso: string, locale: LocaleCode) {
   return `${date.toLocaleDateString([], { month: "short", day: "numeric" })}, ${time}`;
 }
 
+function formatEventTime(iso: string) {
+  return new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" });
+}
+
+const EVENT_LABEL: Record<string, string> = {
+  "route-deviation": "Route deviation",
+  "abnormal-stop": "Abnormal stop",
+  escalated: "SOS escalated",
+};
+
 // Real completed journeys only — populated the moment a journey ends (see
 // endJourney in use-journey-store), never seeded with placeholder data.
 export function RecentJourneysCard() {
@@ -85,23 +95,30 @@ export function RecentJourneysCard() {
                   <p className="text-xs text-muted-foreground">
                     {MODE_LABEL_KEY[j.mode] ? t(MODE_LABEL_KEY[j.mode]) : j.mode} · {j.distanceText} · {formatWhen(j.completedAt, locale)}
                   </p>
-                  {j.emergencyFlags.length > 0 && (
-                    <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                      {j.emergencyFlags.includes("route-deviation") && (
-                        <span className="flex items-center gap-1 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-300">
-                          <MapPinned className="size-3" /> Route deviation
+                  {j.emergencyEvents.length > 0 && (
+                    <div className="mt-1 flex flex-col gap-1">
+                      {j.emergencyEvents.map((e, i) => (
+                        <span
+                          key={`${e.type}-${i}`}
+                          className={
+                            "flex w-fit items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium " +
+                            (e.type === "escalated"
+                              ? "bg-destructive/15 text-destructive"
+                              : "bg-amber-500/15 text-amber-300")
+                          }
+                          title={`${EVENT_LABEL[e.type]} at ${formatEventTime(e.at)}${e.detail ? ` — ${e.detail}` : ""}`}
+                        >
+                          {e.type === "route-deviation" ? (
+                            <MapPinned className="size-3" />
+                          ) : e.type === "abnormal-stop" ? (
+                            <TimerReset className="size-3" />
+                          ) : (
+                            <AlertOctagon className="size-3" />
+                          )}
+                          {EVENT_LABEL[e.type]} at {formatEventTime(e.at)}
+                          {e.detail ? ` — ${e.detail}` : ""}
                         </span>
-                      )}
-                      {j.emergencyFlags.includes("abnormal-stop") && (
-                        <span className="flex items-center gap-1 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-300">
-                          <TimerReset className="size-3" /> Abnormal stop
-                        </span>
-                      )}
-                      {j.emergencyFlags.includes("escalated") && (
-                        <span className="flex items-center gap-1 rounded-full bg-destructive/15 px-1.5 py-0.5 text-[10px] font-medium text-destructive">
-                          <AlertOctagon className="size-3" /> Escalated
-                        </span>
-                      )}
+                      ))}
                     </div>
                   )}
                 </div>

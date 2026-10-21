@@ -13,7 +13,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { useJourneyStore, type EmergencyFlag } from "@/store/use-journey-store";
+import { useJourneyStore, type EmergencyEvent } from "@/store/use-journey-store";
 import { useSosStore } from "@/store/use-sos-store";
 import { useTimelineStore } from "@/store/use-timeline-store";
 import { useCommunityStore } from "@/store/use-community-store";
@@ -46,6 +46,7 @@ export function JourneyCard() {
   const { status, destination, route, mode, endJourney, setStatus } = useJourneyStore();
   const sosStatus = useSosStore((s) => s.status);
   const fireSos = useSosStore((s) => s.fire);
+  const triggeredAt = useSosStore((s) => s.triggeredAt);
   const addTimelineEvent = useTimelineStore((s) => s.addEvent);
   const resetTimeline = useTimelineStore((s) => s.reset);
   const communityReports = useCommunityStore((s) => s.reports);
@@ -229,11 +230,24 @@ export function JourneyCard() {
     setFindingSafeZone(false);
   }
 
-  function journeyEmergencyFlags(): EmergencyFlag[] {
-    const flags: EmergencyFlag[] = [];
-    if (tracking.hadRouteDeviationAlert) flags.push("route-deviation");
-    if (tracking.hadAbnormalStopAlert) flags.push("abnormal-stop");
-    return flags;
+  function journeyEmergencyEvents(): EmergencyEvent[] {
+    const events: EmergencyEvent[] = [];
+    if (tracking.routeDeviationAlertAt) {
+      events.push({ type: "route-deviation", at: tracking.routeDeviationAlertAt, detail: tracking.routeDeviationDetail ?? undefined });
+    }
+    if (tracking.abnormalStopAlertAt) {
+      events.push({ type: "abnormal-stop", at: tracking.abnormalStopAlertAt, detail: tracking.abnormalStopDetail ?? undefined });
+    }
+    if (status === "escalated") {
+      // sosStatus/triggeredAt is the real, exact moment the SOS actually
+      // fired (set in use-sos-store's fire()) — far more precise than
+      // "now, whenever endJourney happens to be called".
+      events.push({
+        type: "escalated",
+        at: triggeredAt ? new Date(triggeredAt).toISOString() : new Date().toISOString(),
+      });
+    }
+    return events;
   }
 
   const displayDestination = reroute
@@ -346,7 +360,7 @@ export function JourneyCard() {
                   className="flex-1"
                   onClick={() => {
                     setReroute(null);
-                    endJourney(journeyEmergencyFlags());
+                    endJourney(journeyEmergencyEvents());
                   }}
                 >
                   <ShieldCheck className="size-4" /> {t("dashboard.reachedSafely")}
@@ -356,7 +370,7 @@ export function JourneyCard() {
                   className="flex-1"
                   onClick={() => {
                     setReroute(null);
-                    endJourney(journeyEmergencyFlags());
+                    endJourney(journeyEmergencyEvents());
                   }}
                 >
                   {t("dashboard.endJourney")}

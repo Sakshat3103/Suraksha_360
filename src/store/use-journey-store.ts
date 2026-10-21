@@ -22,6 +22,17 @@ export interface JourneyRoute {
   path?: GeoPoint[];
 }
 
+// A single emergency anomaly as it actually happened, with the real clock
+// time it was detected — not just "this journey had a deviation" but "at
+// 7:42:18 PM". This is what makes a past journey's emergency history
+// retrievable after the fact instead of only visible live in the timeline
+// (which resets when the next journey starts).
+export interface EmergencyEvent {
+  type: EmergencyFlag;
+  at: string; // ISO timestamp of the moment this was detected/triggered
+  detail?: string; // e.g. "187m off route" or "stationary for 6 min"
+}
+
 export interface CompletedJourney {
   id: string;
   destination: string;
@@ -30,11 +41,13 @@ export interface CompletedJourney {
   safetyScore: number;
   completedAt: string; // ISO timestamp
   wasEscalated: boolean;
-  // Anomalies actually detected during this journey from live tracking
-  // (real-time route deviation / unexpected-stop detection), not just the
-  // final escalation state — see use-journey-tracking.ts. Lets "emergency
-  // journeys" be retrieved after the fact, not only flagged live.
+  // Kept for quick filtering (selectEmergencyJourneys, badges) — derived
+  // from emergencyEvents, same values, just without timestamps.
   emergencyFlags: EmergencyFlag[];
+  // The full, timestamped record: every anomaly this journey actually hit
+  // and the exact moment it happened. This is the retrievable "at what
+  // time was the emergency triggered" log for this journey.
+  emergencyEvents: EmergencyEvent[];
 }
 
 interface JourneyState {
@@ -46,7 +59,7 @@ interface JourneyState {
   history: CompletedJourney[];
   setStatus: (status: JourneyStatus) => void;
   startJourney: (destination: string, mode: TravelMode, route: JourneyRoute) => void;
-  endJourney: (emergencyFlags?: EmergencyFlag[]) => void;
+  endJourney: (emergencyEvents?: EmergencyEvent[]) => void;
 }
 
 export const useJourneyStore = create<JourneyState>((set, get) => ({
@@ -59,15 +72,20 @@ export const useJourneyStore = create<JourneyState>((set, get) => ({
   setStatus: (status) => set({ status }),
   startJourney: (destination, mode, route) =>
     set({ status: "active", destination, mode, route }),
-  endJourney: (emergencyFlags = []) => {
+  endJourney: (emergencyEvents = []) => {
     // Record the journey as completed right away — the dashboard's "Recent
     // journeys" list and stat tiles read straight from this history, so
     // ending a journey shows up there immediately, not on the next reload.
     const { destination, mode, route, status } = get();
     if (destination && mode && route) {
       const wasEscalated = status === "escalated";
-      const flags = new Set(emergencyFlags);
-      if (wasEscalated) flags.add("escalated");
+      const events = [...emergencyEvents];
+      // An escalation that wasn't already logged with its own timestamp
+      // (e.g. the SOS trigger time wasn't passed in) still gets recorded —
+      // "now" is the honest fallback, better than silently dropping it.
+      if (wasEscalated && !events.some((e) => e.type === "escalated")) {
+        events.push({ type: "escalated", at: new Date().toISOString() });
+      }
       const entry: CompletedJourney = {
         id: `${Date.now()}`,
         destination,
@@ -76,7 +94,8 @@ export const useJourneyStore = create<JourneyState>((set, get) => ({
         safetyScore: route.safetyScore,
         completedAt: new Date().toISOString(),
         wasEscalated,
-        emergencyFlags: Array.from(flags),
+        emergencyFlags: Array.from(new Set(events.map((e) => e.type))),
+        emergencyEvents: events,
       };
       set((s) => ({ history: [entry, ...s.history].slice(0, 20) }));
     }
@@ -90,4 +109,11 @@ export const useJourneyStore = create<JourneyState>((set, get) => ({
 // the logic at every call site.
 export function selectEmergencyJourneys(history: CompletedJourney[]): CompletedJourney[] {
   return history.filter((j) => j.emergencyFlags.length > 0);
+}
+
+// Retrieve one journey by id (for a detail view / "show me exactly when
+// the emergency fired for this journey") rather than re-filtering history
+// at every call site.
+export function selectJourneyById(history: CompletedJourney[], id: string): CompletedJourney | undefined {
+  return history.find((j) => j.id === id);
 }
