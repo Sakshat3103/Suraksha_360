@@ -6,6 +6,7 @@ import {
   ShieldAlert,
   MessageSquareWarning,
   ShieldHalf,
+  History,
   type LucideIcon,
 } from "lucide-react";
 
@@ -20,6 +21,7 @@ export const primaryNav: NavItem[] = [
   { labelKey: "nav.contacts", href: "/contacts", icon: Users },
   { labelKey: "nav.community", href: "/community", icon: MessageSquareWarning },
   { labelKey: "nav.guardian", href: "/guardian", icon: ShieldHalf },
+  { labelKey: "nav.journeys", href: "/journeys", icon: History },
   { labelKey: "nav.alerts", href: "/alerts", icon: ShieldAlert },
 ];
 

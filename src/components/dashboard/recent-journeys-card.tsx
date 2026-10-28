@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { AlertOctagon, History, MapPinned, ShieldAlert, TimerReset } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -56,17 +57,24 @@ export function RecentJourneysCard() {
     <Card>
       <CardHeader className="flex-row items-center justify-between">
         <CardTitle className="text-base">{t("dashboard.recentJourneys")}</CardTitle>
-        {emergencyJourneys.length > 0 && (
-          <Button
-            variant={emergencyOnly ? "destructive" : "outline"}
-            size="sm"
-            className="h-7 gap-1.5 px-2.5 text-xs"
-            onClick={() => setEmergencyOnly((v) => !v)}
-          >
-            <ShieldAlert className="size-3.5" />
-            {emergencyOnly ? "All journeys" : `Emergency journeys (${emergencyJourneys.length})`}
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {emergencyJourneys.length > 0 && (
+            <Button
+              variant={emergencyOnly ? "destructive" : "outline"}
+              size="sm"
+              className="h-7 gap-1.5 px-2.5 text-xs"
+              onClick={() => setEmergencyOnly((v) => !v)}
+            >
+              <ShieldAlert className="size-3.5" />
+              {emergencyOnly ? "All journeys" : `Emergency journeys (${emergencyJourneys.length})`}
+            </Button>
+          )}
+          {history.length > 0 && (
+            <Button asChild variant="ghost" size="sm" className="h-7 px-2.5 text-xs">
+              <Link href="/journeys">View all</Link>
+            </Button>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
         {visible.length === 0 ? (
