@@ -111,6 +111,69 @@ export interface Database {
         };
         Relationships: [];
       };
+      journeys: {
+        Row: {
+          id: string;
+          user_id: string;
+          destination: string;
+          mode: string;
+          distance_text: string | null;
+          safety_score: number | null;
+          was_escalated: boolean;
+          completed_at: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          destination: string;
+          mode: string;
+          distance_text?: string | null;
+          safety_score?: number | null;
+          was_escalated?: boolean;
+          completed_at?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          destination?: string;
+          mode?: string;
+          distance_text?: string | null;
+          safety_score?: number | null;
+          was_escalated?: boolean;
+          completed_at?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      journey_emergency_events: {
+        Row: {
+          id: string;
+          journey_id: string;
+          type: string;
+          occurred_at: string;
+          detail: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          journey_id: string;
+          type: string;
+          occurred_at: string;
+          detail?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          journey_id?: string;
+          type?: string;
+          occurred_at?: string;
+          detail?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
@@ -122,3 +185,5 @@ export interface Database {
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 export type EmergencyContact = Database["public"]["Tables"]["emergency_contacts"]["Row"];
 export type UserSettings = Database["public"]["Tables"]["user_settings"]["Row"];
+export type JourneyRow = Database["public"]["Tables"]["journeys"]["Row"];
+export type JourneyEmergencyEventRow = Database["public"]["Tables"]["journey_emergency_events"]["Row"];

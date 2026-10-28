@@ -78,3 +78,47 @@ alter table public.user_settings enable row level security;
 
 create policy "Settings are managed by owner" on public.user_settings
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- Journey history ---------------------------------------------------------
+-- Completed journeys and their timestamped emergency events, persisted so
+-- history survives logout/new device instead of living only in client
+-- memory (useJourneyStore).
+create table if not exists public.journeys (
+  id uuid primary key default uuid_generate_v4(),
+  user_id uuid not null references auth.users (id) on delete cascade,
+  destination text not null,
+  mode text not null,
+  distance_text text,
+  safety_score integer,
+  was_escalated boolean not null default false,
+  completed_at timestamptz not null default now(),
+  created_at timestamptz not null default now()
+);
+
+alter table public.journeys enable row level security;
+
+create policy "Journeys are managed by owner" on public.journeys
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+create index if not exists journeys_user_id_idx on public.journeys (user_id);
+
+create table if not exists public.journey_emergency_events (
+  id uuid primary key default uuid_generate_v4(),
+  journey_id uuid not null references public.journeys (id) on delete cascade,
+  type text not null check (type in ('route-deviation', 'abnormal-stop', 'escalated')),
+  occurred_at timestamptz not null,
+  detail text,
+  created_at timestamptz not null default now()
+);
+
+alter table public.journey_emergency_events enable row level security;
+
+create policy "Journey events are managed by owner" on public.journey_emergency_events
+  for all using (
+    exists (select 1 from public.journeys j where j.id = journey_id and j.user_id = auth.uid())
+  )
+  with check (
+    exists (select 1 from public.journeys j where j.id = journey_id and j.user_id = auth.uid())
+  );
+
+create index if not exists journey_events_journey_id_idx on public.journey_emergency_events (journey_id);

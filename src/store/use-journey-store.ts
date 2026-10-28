@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import type { GeoPoint } from "@/lib/geo";
+import { saveCompletedJourney } from "@/lib/journey-history-service";
 
 export type JourneyStatus = "idle" | "active" | "delayed" | "escalated" | "completed";
 export type TravelMode = "walking" | "bus" | "metro" | "cab" | "scooty" | "school_bus";
@@ -98,6 +99,10 @@ export const useJourneyStore = create<JourneyState>((set, get) => ({
         emergencyEvents: events,
       };
       set((s) => ({ history: [entry, ...s.history].slice(0, 20) }));
+      // Fire-and-forget: local state is already updated so the UI never
+      // waits on this; Supabase becomes the durable copy that survives
+      // logout and syncs across devices.
+      saveCompletedJourney(entry).catch(() => {});
     }
     set({ status: "idle", destination: null, mode: null, route: null });
   },

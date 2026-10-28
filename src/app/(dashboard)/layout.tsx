@@ -4,6 +4,7 @@ import { SosListener } from "@/components/dashboard/sos-listener";
 import { SosOverlay } from "@/components/dashboard/sos-overlay";
 import { AICopilot } from "@/components/dashboard/ai-copilot";
 import { EmergencyVoiceDetector } from "@/components/dashboard/emergency-voice-detector";
+import { JourneyHistorySync } from "@/components/dashboard/journey-history-sync";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -17,6 +18,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <SosOverlay />
       <EmergencyVoiceDetector />
       <AICopilot />
+      <JourneyHistorySync />
     </div>
   );
 }
