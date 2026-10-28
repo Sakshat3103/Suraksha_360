@@ -1,19 +1,11 @@
 "use client";
 
 import * as React from "react";
-import { AlertOctagon, History, MapPinned, ShieldAlert, TimerReset } from "lucide-react";
+import { AlertOctagon, History, ShieldAlert } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
 import { useJourneyStore, selectEmergencyJourneys, type CompletedJourney } from "@/store/use-journey-store";
-import { translate } from "@/lib/i18n/dictionary";
-import type { LocaleCode } from "@/store/use-locale-store";
+import { JourneyDetailDialog, formatJourneyWhen } from "@/components/dashboard/journey-detail-dialog";
 import { useT } from "@/lib/i18n/use-t";
 import { cn } from "@/lib/utils";
 
@@ -26,40 +18,10 @@ const MODE_LABEL_KEY: Record<string, string> = {
   school_bus: "dashboard.modeSchoolBus",
 };
 
-const EVENT_LABEL: Record<string, string> = {
-  "route-deviation": "Route deviation",
-  "abnormal-stop": "Abnormal stop",
-  escalated: "SOS escalated",
-};
-
-function formatWhen(iso: string, locale: LocaleCode) {
-  const date = new Date(iso);
-  const now = new Date();
-  const isToday = date.toDateString() === now.toDateString();
-  const yesterday = new Date(now);
-  yesterday.setDate(now.getDate() - 1);
-  const isYesterday = date.toDateString() === yesterday.toDateString();
-  const time = date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
-  if (isToday) return `${translate("dashboard.today", locale)}, ${time}`;
-  if (isYesterday) return `${translate("dashboard.yesterday", locale)}, ${time}`;
-  return `${date.toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" })}, ${time}`;
-}
-
-function formatEventTime(iso: string) {
-  return new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" });
-}
-
-function EventIcon({ type }: { type: string }) {
-  if (type === "route-deviation") return <MapPinned className="size-3.5" />;
-  if (type === "abnormal-stop") return <TimerReset className="size-3.5" />;
-  return <AlertOctagon className="size-3.5" />;
-}
-
-// A summary table of every stored journey (synced from Supabase via
+// Full archive of every stored journey (synced from Supabase via
 // useJourneyStore, see journey-history-service.ts), one row per journey.
-// Clicking a row opens a dialog with the full detail: every emergency
-// event and the exact timestamp it fired, not just the summary badges the
-// table row has room for.
+// The dashboard's RecentJourneysCard shows the same kind of summary table
+// for just the last few; this page is the complete, unlimited version.
 export default function JourneysPage() {
   const history = useJourneyStore((s) => s.history);
   const { t, locale } = useT();
@@ -137,7 +99,7 @@ export default function JourneysPage() {
                         {MODE_LABEL_KEY[j.mode] ? t(MODE_LABEL_KEY[j.mode]) : j.mode}
                       </td>
                       <td className="px-4 py-3.5 text-muted-foreground">{j.distanceText}</td>
-                      <td className="px-4 py-3.5 text-muted-foreground">{formatWhen(j.completedAt, locale)}</td>
+                      <td className="px-4 py-3.5 text-muted-foreground">{formatJourneyWhen(j.completedAt, locale)}</td>
                       <td className="px-4 py-3.5">
                         {j.emergencyEvents.length === 0 ? (
                           <span className="text-xs text-muted-foreground">—</span>
@@ -166,67 +128,7 @@ export default function JourneysPage() {
         </CardContent>
       </Card>
 
-      <Dialog open={selected !== null} onOpenChange={(open) => !open && setSelected(null)}>
-        <DialogContent>
-          {selected && (
-            <>
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-1.5">
-                  {selected.destination}
-                  {selected.wasEscalated && <AlertOctagon className="size-4 text-destructive" />}
-                </DialogTitle>
-                <DialogDescription>
-                  {MODE_LABEL_KEY[selected.mode] ? t(MODE_LABEL_KEY[selected.mode]) : selected.mode} ·{" "}
-                  {selected.distanceText} · Completed {formatWhen(selected.completedAt, locale)}
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className="flex items-center justify-between rounded-xl bg-foreground/[0.04] px-4 py-3">
-                <span className="text-sm text-muted-foreground">Safety score</span>
-                <span
-                  className={cn(
-                    "text-lg font-semibold",
-                    selected.safetyScore >= 75 ? "text-brand-emerald" : "text-amber-300"
-                  )}
-                >
-                  {selected.safetyScore}/100
-                </span>
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Emergency events
-                </p>
-                {selected.emergencyEvents.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No emergency events on this journey.</p>
-                ) : (
-                  <div className="flex flex-col gap-2">
-                    {selected.emergencyEvents.map((e, i) => (
-                      <div
-                        key={`${e.type}-${i}`}
-                        className={cn(
-                          "flex items-start gap-2.5 rounded-xl px-3 py-2.5 text-sm",
-                          e.type === "escalated"
-                            ? "bg-destructive/10 text-destructive"
-                            : "bg-amber-500/10 text-amber-300"
-                        )}
-                      >
-                        <EventIcon type={e.type} />
-                        <div className="flex flex-col">
-                          <span className="font-medium">
-                            {EVENT_LABEL[e.type]} at {formatEventTime(e.at)}
-                          </span>
-                          {e.detail && <span className="text-xs opacity-80">{e.detail}</span>}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+      <JourneyDetailDialog journey={selected} onOpenChange={(open) => !open && setSelected(null)} />
     </div>
   );
 }

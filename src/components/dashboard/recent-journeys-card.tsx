@@ -2,12 +2,11 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { AlertOctagon, History, MapPinned, ShieldAlert, TimerReset } from "lucide-react";
+import { AlertOctagon, History, ShieldAlert } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useJourneyStore, selectEmergencyJourneys } from "@/store/use-journey-store";
-import { translate } from "@/lib/i18n/dictionary";
-import type { LocaleCode } from "@/store/use-locale-store";
+import { useJourneyStore, selectEmergencyJourneys, type CompletedJourney } from "@/store/use-journey-store";
+import { JourneyDetailDialog, formatJourneyWhen } from "@/components/dashboard/journey-detail-dialog";
 import { useT } from "@/lib/i18n/use-t";
 import { cn } from "@/lib/utils";
 
@@ -20,38 +19,20 @@ const MODE_LABEL_KEY: Record<string, string> = {
   school_bus: "dashboard.modeSchoolBus",
 };
 
-function formatWhen(iso: string, locale: LocaleCode) {
-  const date = new Date(iso);
-  const now = new Date();
-  const isToday = date.toDateString() === now.toDateString();
-  const yesterday = new Date(now);
-  yesterday.setDate(now.getDate() - 1);
-  const isYesterday = date.toDateString() === yesterday.toDateString();
-  const time = date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
-  if (isToday) return `${translate("dashboard.today", locale)}, ${time}`;
-  if (isYesterday) return `${translate("dashboard.yesterday", locale)}, ${time}`;
-  return `${date.toLocaleDateString([], { month: "short", day: "numeric" })}, ${time}`;
-}
+const DASHBOARD_ROW_LIMIT = 5;
 
-function formatEventTime(iso: string) {
-  return new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" });
-}
-
-const EVENT_LABEL: Record<string, string> = {
-  "route-deviation": "Route deviation",
-  "abnormal-stop": "Abnormal stop",
-  escalated: "SOS escalated",
-};
-
-// Real completed journeys only — populated the moment a journey ends (see
-// endJourney in use-journey-store), never seeded with placeholder data.
+// Compact on-dashboard summary table of the most recent journeys — a quick
+// glance, not the full archive (that's /journeys). Clicking a row opens
+// the same detail dialog used on the full page, so either entry point
+// shows the exact same record: every emergency event with its timestamp.
 export function RecentJourneysCard() {
   const history = useJourneyStore((s) => s.history);
   const { t, locale } = useT();
   const [emergencyOnly, setEmergencyOnly] = React.useState(false);
+  const [selected, setSelected] = React.useState<CompletedJourney | null>(null);
 
   const emergencyJourneys = React.useMemo(() => selectEmergencyJourneys(history), [history]);
-  const visible = emergencyOnly ? emergencyJourneys : history;
+  const visible = (emergencyOnly ? emergencyJourneys : history).slice(0, DASHBOARD_ROW_LIMIT);
 
   return (
     <Card>
@@ -76,7 +57,7 @@ export function RecentJourneysCard() {
           )}
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className={visible.length > 0 ? "p-0" : undefined}>
         {visible.length === 0 ? (
           <div className="flex flex-col items-center gap-2 py-6 text-center">
             <span className="flex size-10 items-center justify-center rounded-xl bg-foreground/[0.06] text-muted-foreground">
@@ -92,57 +73,62 @@ export function RecentJourneysCard() {
             </p>
           </div>
         ) : (
-          <div className="flex flex-col divide-y divide-white/10">
-            {visible.map((j) => (
-              <div key={j.id} className="flex items-center justify-between py-3.5 first:pt-0 last:pb-0">
-                <div>
-                  <p className="flex items-center gap-1.5 text-sm font-medium">
-                    {j.destination}
-                    {j.wasEscalated && <AlertOctagon className="size-3.5 text-destructive" />}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {MODE_LABEL_KEY[j.mode] ? t(MODE_LABEL_KEY[j.mode]) : j.mode} · {j.distanceText} · {formatWhen(j.completedAt, locale)}
-                  </p>
-                  {j.emergencyEvents.length > 0 && (
-                    <div className="mt-1 flex flex-col gap-1">
-                      {j.emergencyEvents.map((e, i) => (
-                        <span
-                          key={`${e.type}-${i}`}
-                          className={
-                            "flex w-fit items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium " +
-                            (e.type === "escalated"
-                              ? "bg-destructive/15 text-destructive"
-                              : "bg-amber-500/15 text-amber-300")
-                          }
-                          title={`${EVENT_LABEL[e.type]} at ${formatEventTime(e.at)}${e.detail ? ` — ${e.detail}` : ""}`}
-                        >
-                          {e.type === "route-deviation" ? (
-                            <MapPinned className="size-3" />
-                          ) : e.type === "abnormal-stop" ? (
-                            <TimerReset className="size-3" />
-                          ) : (
-                            <AlertOctagon className="size-3" />
-                          )}
-                          {EVENT_LABEL[e.type]} at {formatEventTime(e.at)}
-                          {e.detail ? ` — ${e.detail}` : ""}
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-white/10 text-left text-xs text-muted-foreground">
+                  <th className="px-4 py-2.5 font-medium">Destination</th>
+                  <th className="px-4 py-2.5 font-medium">Mode</th>
+                  <th className="px-4 py-2.5 font-medium">Completed</th>
+                  <th className="px-4 py-2.5 font-medium">Events</th>
+                  <th className="px-4 py-2.5 text-right font-medium">Score</th>
+                </tr>
+              </thead>
+              <tbody>
+                {visible.map((j) => (
+                  <tr
+                    key={j.id}
+                    onClick={() => setSelected(j)}
+                    className="cursor-pointer border-b border-white/5 transition-colors last:border-0 hover:bg-foreground/[0.04]"
+                  >
+                    <td className="px-4 py-3 font-medium">
+                      <span className="flex items-center gap-1.5">
+                        {j.destination}
+                        {j.wasEscalated && <AlertOctagon className="size-3.5 text-destructive" />}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {MODE_LABEL_KEY[j.mode] ? t(MODE_LABEL_KEY[j.mode]) : j.mode}
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">{formatJourneyWhen(j.completedAt, locale)}</td>
+                    <td className="px-4 py-3">
+                      {j.emergencyEvents.length === 0 ? (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] font-medium text-amber-300">
+                          {j.emergencyEvents.length} event{j.emergencyEvents.length > 1 ? "s" : ""}
                         </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <span
-                  className={cn(
-                    "text-sm font-semibold",
-                    j.safetyScore >= 75 ? "text-brand-emerald" : "text-amber-300"
-                  )}
-                >
-                  {j.safetyScore}/100
-                </span>
-              </div>
-            ))}
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <span
+                        className={cn(
+                          "font-semibold",
+                          j.safetyScore >= 75 ? "text-brand-emerald" : "text-amber-300"
+                        )}
+                      >
+                        {j.safetyScore}/100
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </CardContent>
+
+      <JourneyDetailDialog journey={selected} onOpenChange={(open) => !open && setSelected(null)} />
     </Card>
   );
 }
