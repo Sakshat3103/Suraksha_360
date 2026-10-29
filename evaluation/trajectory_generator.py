@@ -113,6 +113,7 @@ def generate_trajectory(
     rng: random.Random,
     walking_speed_mps=1.3,
     gps_noise_std_m=6.0,
+    gps_noise_correlation=0.85,
 ) -> SimulatedTrajectory:
     raw_path = fetch_osrm_route(origin_lat, origin_lng, dest_lat, dest_lng)
     dense_path = densify(raw_path, step_m=walking_speed_mps)
@@ -152,7 +153,16 @@ def generate_trajectory(
 
     fixes = []
     events = []
-    active = None  # the currently-open window dict, plus runtime state
+    active = None
+
+    # Real GPS error is temporally correlated, not an independent random
+    # jump every second (the device's position estimate drifts smoothly as
+    # multipath/atmospheric conditions change) — modelled here as an AR(1)
+    # process: small per-second innovation, but able to wander by up to
+    # roughly gps_noise_std_m over tens of seconds, matching realistic
+    # device behaviour instead of teleporting the fix every tick.
+    innovation_std = gps_noise_std_m * math.sqrt(max(1e-6, 1 - gps_noise_correlation ** 2))
+    bias_x_m, bias_y_m = 0.0, 0.0  # the currently-open window dict, plus runtime state
     next_window_idx = 0
 
     for i in range(n):
@@ -175,17 +185,15 @@ def generate_trajectory(
             lat, lng = base_lat, base_lng
 
         accuracy = max(3.0, rng.gauss(10, 6) if rng.random() > 0.15 else rng.gauss(35, 12))
-        # Real GPS noise is a 2D scatter AROUND the true point, not a forced
-        # minimum-radius displacement away from it — most fixes land close
-        # to the true point, with occasional larger excursions. Modelled as
-        # independent Gaussian error in each local-metre axis (this is what
-        # lets a stationary user's consecutive fixes mostly stay within the
-        # stop-detector's radius, instead of every fix being artificially
-        # pushed outward and perpetually resetting the stop timer).
-        dx_m = rng.gauss(0, gps_noise_std_m)
-        dy_m = rng.gauss(0, gps_noise_std_m)
-        dlat = dy_m / M_PER_DEG_LAT
-        dlng = dx_m / m_per_deg_lng(lat)
+        # AR(1)-correlated 2D GPS error: small step-to-step change, bounded
+        # long-run magnitude (~gps_noise_std_m). This is what lets a
+        # stationary user's consecutive fixes mostly stay close together
+        # second-to-second, instead of each fix independently teleporting
+        # within a noise disk and perpetually resetting the stop timer.
+        bias_x_m = gps_noise_correlation * bias_x_m + rng.gauss(0, innovation_std)
+        bias_y_m = gps_noise_correlation * bias_y_m + rng.gauss(0, innovation_std)
+        dlat = bias_y_m / M_PER_DEG_LAT
+        dlng = bias_x_m / m_per_deg_lng(lat)
         lat, lng = lat + dlat, lng + dlng
 
         fixes.append({"lat": lat, "lng": lng, "accuracy": accuracy, "t": i})
