@@ -18,7 +18,7 @@ export function useLiveLocation() {
     setIsLocating(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        setPosition({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setPosition({ lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy });
         setIsLocating(false);
       },
       () => {
@@ -37,7 +37,7 @@ export function useLiveLocation() {
     setIsLocating(true);
     const id = navigator.geolocation.watchPosition(
       (pos) => {
-        setPosition({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setPosition({ lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy });
         setIsLocating(false);
         setIsLive(true);
       },

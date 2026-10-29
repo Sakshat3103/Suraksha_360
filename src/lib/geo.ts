@@ -21,6 +21,11 @@ async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutM
 export interface GeoPoint {
   lat: number;
   lng: number;
+  // Horizontal accuracy radius (meters) reported by the device's GPS for
+  // this fix, when available (navigator.geolocation / Capacitor Geolocation
+  // both expose this). Undefined for points that never came from a live
+  // device fix (route waypoints, safe-zone lookups, manual pins).
+  accuracy?: number;
 }
 
 export interface PlaceResult {
