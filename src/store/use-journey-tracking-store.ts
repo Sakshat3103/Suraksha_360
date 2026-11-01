@@ -42,6 +42,16 @@ interface JourneyTrackingState {
   confirmAbnormalStopAlert: (atIso: string, detail: string) => void;
   setStoppedSince: (value: StoppedAnchor | null) => void;
   setDeviationBreach: (value: DeviationBreach | null) => void;
+  // TEMPORARY DEBUG AIDS — remove once the jitter investigation is done.
+  // Tracks how many times the "stopped since" anchor has been reset
+  // (i.e. a new GPS fix was far enough from the anchor to count as
+  // movement) and how far the fix that caused the most recent reset
+  // actually was, so it's visible on-screen whether GPS jitter (not an
+  // actual change in position) is what's repeatedly restarting the
+  // abnormal-stop timer before it reaches the alert threshold.
+  stopResetCount: number;
+  lastStopJumpMeters: number | null;
+  recordStopReset: (jumpMeters: number | null) => void;
   reset: () => void;
 }
 
@@ -54,6 +64,8 @@ const initialTrackingState = {
   abnormalStopDetail: null,
   stoppedSince: null,
   deviationBreach: null,
+  stopResetCount: 0,
+  lastStopJumpMeters: null,
 } satisfies Partial<JourneyTrackingState>;
 
 export const useJourneyTrackingStore = create<JourneyTrackingState>((set) => ({
@@ -75,5 +87,7 @@ export const useJourneyTrackingStore = create<JourneyTrackingState>((set) => ({
     ),
   setStoppedSince: (value) => set({ stoppedSince: value }),
   setDeviationBreach: (value) => set({ deviationBreach: value }),
+  recordStopReset: (jumpMeters) =>
+    set((s) => ({ stopResetCount: s.stopResetCount + 1, lastStopJumpMeters: jumpMeters })),
   reset: () => set({ ...initialTrackingState }),
 }));

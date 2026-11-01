@@ -134,6 +134,13 @@ export function useJourneyTracking(
     const stoppedRadius = STOPPED_RADIUS_METERS + accuracyWidening(position.accuracy);
     const stopped = store.stoppedSince;
     if (!stopped || haversineMeters(position, stopped.anchor) > stoppedRadius) {
+      // TEMPORARY DEBUG: only count this as a "reset" (for the on-screen
+      // debug readout) when there was a previous anchor to jump away from
+      // — the very first fix of the journey isn't a reset, it's the
+      // initial anchor.
+      if (stopped) {
+        store.recordStopReset(Math.round(haversineMeters(position, stopped.anchor)));
+      }
       store.setStoppedSince({ anchor: position, since: now });
       store.setUnexpectedStopSeconds(0);
     } else {

@@ -19,6 +19,7 @@ import { useTimelineStore } from "@/store/use-timeline-store";
 import { useCommunityStore } from "@/store/use-community-store";
 import { StartJourneyDialog } from "@/components/dashboard/start-journey-dialog";
 import { useJourneyTracking } from "@/hooks/use-journey-tracking";
+import { useJourneyTrackingStore } from "@/store/use-journey-tracking-store";
 import { RouteMapClient } from "@/components/dashboard/route-map-client";
 import { SafetyScoreCard } from "@/components/dashboard/safety-score-card";
 import { SafeHavenCard } from "@/components/dashboard/safe-haven-card";
@@ -134,6 +135,9 @@ export function JourneyCard() {
   // see src/hooks/use-journey-tracking.ts. Feeds the safety score and
   // emergency detector with real signals instead of placeholders.
   const tracking = useJourneyTracking(status === "active" || status === "escalated", route?.path);
+  // TEMPORARY DEBUG — remove alongside the readout above.
+  const stopResetCount = useJourneyTrackingStore((s) => s.stopResetCount);
+  const lastStopJumpMeters = useJourneyTrackingStore((s) => s.lastStopJumpMeters);
   const effectiveRouteDeviationMeters = Math.max(tracking.routeDeviationMeters, reroute ? 500 : 0);
 
   const riskResult = React.useMemo(() => {
@@ -340,6 +344,19 @@ export function JourneyCard() {
                 <span className="ml-auto font-medium tabular-nums">{formatCountdown(remaining)}</span>
               </div>
               <Progress value={progressValue} />
+              {/* TEMPORARY DEBUG READOUT — remove before the review once the
+                  stop-detection jitter investigation is done. Shows live GPS
+                  accuracy and how many times the stop-anchor has reset, so
+                  it's visible on-screen whether GPS jitter (not an actual
+                  change in position) is what's restarting the abnormal-stop
+                  timer before it reaches the 240s alert threshold. */}
+              <div className="rounded-md border border-dashed border-amber-400/50 bg-amber-400/5 px-2.5 py-2 text-[11px] leading-relaxed text-amber-200/90 font-mono">
+                DEBUG — GPS accuracy: {tracking.position?.accuracy ? `${Math.round(tracking.position.accuracy)}m` : "—"}
+                {" · "}stop timer: {tracking.unexpectedStopSeconds}s
+                {" · "}resets: {stopResetCount}
+                {lastStopJumpMeters !== null && ` (last jump: ${lastStopJumpMeters}m)`}
+                {" · "}deviation: {Math.round(tracking.routeDeviationMeters)}m
+              </div>
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <Users2 className="size-3.5 text-brand-emerald" />
                 {t("dashboard.guardiansWatching")}
