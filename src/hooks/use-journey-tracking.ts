@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useLiveLocation } from "@/hooks/use-live-location";
+import { useJourneyTrackingStore } from "@/store/use-journey-tracking-store";
 import { distanceToPathMeters, haversineMeters, type GeoPoint } from "@/lib/geo";
 
 // A traveller is "stopped" once consecutive GPS fixes sit within this
@@ -78,81 +79,74 @@ export function useJourneyTracking(
 
   const { position, isLive, enableLive, disableLive } = useLiveLocation();
 
-  const [routeDeviationMeters, setRouteDeviationMeters] = React.useState(0);
-  const [unexpectedStopSeconds, setUnexpectedStopSeconds] = React.useState(0);
-  const [routeDeviationAlertAt, setRouteDeviationAlertAt] = React.useState<string | null>(null);
-  const [abnormalStopAlertAt, setAbnormalStopAlertAt] = React.useState<string | null>(null);
-  const [routeDeviationDetail, setRouteDeviationDetail] = React.useState<string | null>(null);
-  const [abnormalStopDetail, setAbnormalStopDetail] = React.useState<string | null>(null);
-
-  const stoppedSinceRef = React.useRef<{ anchor: GeoPoint; since: number } | null>(null);
-  // Tracks an in-progress, not-yet-confirmed deviation breach: when it
-  // started, and the (accuracy-widened) threshold that was active at that
-  // moment, so a later, noisier fix can't retroactively loosen a breach
-  // that was already confirmed against a stricter threshold.
-  const deviationBreachRef = React.useRef<{ since: number; thresholdAtBreach: number } | null>(null);
+  // All deviation/stop detection progress lives in a global store, not
+  // local useState/useRef — see use-journey-tracking-store.ts for why.
+  // This means navigating to another page and back during an active
+  // journey resumes detection exactly where it left off, in real time,
+  // instead of silently restarting an in-progress breach or stop timer.
+  const routeDeviationMeters = useJourneyTrackingStore((s) => s.routeDeviationMeters);
+  const unexpectedStopSeconds = useJourneyTrackingStore((s) => s.unexpectedStopSeconds);
+  const routeDeviationAlertAt = useJourneyTrackingStore((s) => s.routeDeviationAlertAt);
+  const abnormalStopAlertAt = useJourneyTrackingStore((s) => s.abnormalStopAlertAt);
+  const routeDeviationDetail = useJourneyTrackingStore((s) => s.routeDeviationDetail);
+  const abnormalStopDetail = useJourneyTrackingStore((s) => s.abnormalStopDetail);
 
   React.useEffect(() => {
     if (active) {
       enableLive();
     } else {
       disableLive();
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- resetting tracking state between journeys
-      setRouteDeviationMeters(0);
-      setUnexpectedStopSeconds(0);
-      setRouteDeviationAlertAt(null);
-      setAbnormalStopAlertAt(null);
-      setRouteDeviationDetail(null);
-      setAbnormalStopDetail(null);
-      stoppedSinceRef.current = null;
-      deviationBreachRef.current = null;
+      useJourneyTrackingStore.getState().reset();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active]);
 
   React.useEffect(() => {
     if (!active || !position) return;
+    const store = useJourneyTrackingStore.getState();
 
     const deviation = distanceToPathMeters(position, path);
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- synchronizing to a fresh GPS fix from the browser's geolocation API, an external system
-    setRouteDeviationMeters(deviation);
+    store.setRouteDeviationMeters(deviation);
 
     const effectiveDeviationThreshold = deviationAlertMeters + accuracyWidening(position.accuracy);
     const now = Date.now();
 
+    let breach = store.deviationBreach;
     if (deviation >= effectiveDeviationThreshold) {
-      if (!deviationBreachRef.current) {
-        deviationBreachRef.current = { since: now, thresholdAtBreach: effectiveDeviationThreshold };
+      if (!breach) {
+        breach = { since: now, thresholdAtBreach: effectiveDeviationThreshold };
+        store.setDeviationBreach(breach);
       }
-      const sustainedMs = now - deviationBreachRef.current.since;
+      const sustainedMs = now - breach.since;
       if (sustainedMs >= DEVIATION_SUSTAIN_MS) {
-        setRouteDeviationAlertAt((prev) => prev ?? new Date(deviationBreachRef.current!.since).toISOString());
-        setRouteDeviationDetail(
-          (prev) => prev ?? `${Math.round(deviation)}m off the planned route for ${Math.round(sustainedMs / 1000)}s`
+        store.confirmRouteDeviationAlert(
+          new Date(breach.since).toISOString(),
+          `${Math.round(deviation)}m off the planned route for ${Math.round(sustainedMs / 1000)}s`
         );
       }
-    } else if (deviationBreachRef.current && deviation < deviationBreachRef.current.thresholdAtBreach * DEVIATION_RELEASE_RATIO) {
+    } else if (breach && deviation < breach.thresholdAtBreach * DEVIATION_RELEASE_RATIO) {
       // Clear recovery — well below the threshold that was active when the
       // breach started, not just noisy hovering near the line — cancels an
       // unconfirmed breach so it must sustain again from scratch.
-      deviationBreachRef.current = null;
+      store.setDeviationBreach(null);
     }
 
     const stoppedRadius = STOPPED_RADIUS_METERS + accuracyWidening(position.accuracy);
-    const stopped = stoppedSinceRef.current;
+    const stopped = store.stoppedSince;
     if (!stopped || haversineMeters(position, stopped.anchor) > stoppedRadius) {
-      stoppedSinceRef.current = { anchor: position, since: now };
-      setUnexpectedStopSeconds(0);
+      store.setStoppedSince({ anchor: position, since: now });
+      store.setUnexpectedStopSeconds(0);
     } else {
       const seconds = Math.round((now - stopped.since) / 1000);
-      setUnexpectedStopSeconds(seconds);
+      store.setUnexpectedStopSeconds(seconds);
       if (seconds >= stopAlertSeconds) {
-        setAbnormalStopAlertAt((prev) => prev ?? new Date(stopped.since).toISOString());
-        setAbnormalStopDetail((prev) => prev ?? `stationary for ${Math.round(seconds / 60)} min`);
+        store.confirmAbnormalStopAlert(
+          new Date(stopped.since).toISOString(),
+          `stationary for ${Math.round(seconds / 60)} min`
+        );
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [position, active, path]);
+  }, [position, active, path, deviationAlertMeters, stopAlertSeconds]);
 
   // Unexpected-stop seconds should keep climbing even between GPS fixes
   // (watchPosition only fires on a new reading, which can be many seconds
@@ -160,27 +154,33 @@ export function useJourneyTracking(
   // frozen at whatever the last fix happened to read. It also re-checks any
   // in-progress route-deviation breach against the sustain window, so an
   // alert still confirms on schedule even without a brand-new GPS fix
-  // arriving right at the DEVIATION_SUSTAIN_MS mark.
+  // arriving right at the DEVIATION_SUSTAIN_MS mark. Reading current state
+  // via getState() (not a dependency) on every tick means this stays
+  // correct even if the component mounted mid-breach after a navigation.
   React.useEffect(() => {
     if (!active) return;
     const interval = setInterval(() => {
-      const stopped = stoppedSinceRef.current;
+      const store = useJourneyTrackingStore.getState();
+
+      const stopped = store.stoppedSince;
       if (stopped) {
         const seconds = Math.round((Date.now() - stopped.since) / 1000);
-        setUnexpectedStopSeconds(seconds);
+        store.setUnexpectedStopSeconds(seconds);
         if (seconds >= stopAlertSeconds) {
-          setAbnormalStopAlertAt((prev) => prev ?? new Date(stopped.since).toISOString());
-          setAbnormalStopDetail((prev) => prev ?? `stationary for ${Math.round(seconds / 60)} min`);
+          store.confirmAbnormalStopAlert(
+            new Date(stopped.since).toISOString(),
+            `stationary for ${Math.round(seconds / 60)} min`
+          );
         }
       }
 
-      const breach = deviationBreachRef.current;
+      const breach = store.deviationBreach;
       if (breach) {
         const sustainedMs = Date.now() - breach.since;
         if (sustainedMs >= DEVIATION_SUSTAIN_MS) {
-          setRouteDeviationAlertAt((prev) => prev ?? new Date(breach.since).toISOString());
-          setRouteDeviationDetail(
-            (prev) => prev ?? `off the planned route for ${Math.round(sustainedMs / 1000)}s`
+          store.confirmRouteDeviationAlert(
+            new Date(breach.since).toISOString(),
+            `off the planned route for ${Math.round(sustainedMs / 1000)}s`
           );
         }
       }
