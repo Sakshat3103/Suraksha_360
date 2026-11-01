@@ -1,0 +1,7 @@
+config,detector,n_true_positive,n_false_positive,n_false_negative,precision,recall,f1,mean_latency_s,p95_latency_s,false_alarms_per_hour
+"default (150m/90s dev, 240s stop)",naive_single_fix,106,85452,14,0.001,0.883,0.002,13.604,33.000,579.090
+"default (150m/90s dev, 240s stop)",fixed_hysteresis,28,0,92,1.000,0.233,0.378,116.071,149.250,0.000
+"default (150m/90s dev, 240s stop)",accuracy_aware_hysteresis,26,0,94,1.000,0.217,0.356,117.577,153.100,0.000
+"fast (150m/45s dev, 120s stop)",naive_single_fix,106,85452,14,0.001,0.883,0.002,13.604,33.000,579.090
+"fast (150m/45s dev, 120s stop)",fixed_hysteresis,38,0,82,1.000,0.317,0.481,69.368,86.750,0.000
+"fast (150m/45s dev, 120s stop)",accuracy_aware_hysteresis,43,55,77,0.439,0.358,0.394,101.767,339.200,0.373
