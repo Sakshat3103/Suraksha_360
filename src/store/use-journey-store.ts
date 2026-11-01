@@ -56,6 +56,12 @@ interface JourneyState {
   destination: string | null;
   mode: TravelMode | null;
   route: JourneyRoute | null;
+  // ISO timestamp of when the ACTIVE journey actually started, set once
+  // in startJourney and never touched again until the journey ends. The
+  // dashboard's countdown and elapsed-time displays derive their value
+  // from this (now - startedAt), not from component-local timer state,
+  // so navigating to another page and back does not reset the clock.
+  startedAt: string | null;
   guardianOnline: boolean;
   history: CompletedJourney[];
   setStatus: (status: JourneyStatus) => void;
@@ -68,11 +74,12 @@ export const useJourneyStore = create<JourneyState>((set, get) => ({
   destination: null,
   mode: null,
   route: null,
+  startedAt: null,
   guardianOnline: true,
   history: [],
   setStatus: (status) => set({ status }),
   startJourney: (destination, mode, route) =>
-    set({ status: "active", destination, mode, route }),
+    set({ status: "active", destination, mode, route, startedAt: new Date().toISOString() }),
   endJourney: (emergencyEvents = []) => {
     // Record the journey as completed right away — the dashboard's "Recent
     // journeys" list and stat tiles read straight from this history, so
@@ -104,7 +111,7 @@ export const useJourneyStore = create<JourneyState>((set, get) => ({
       // logout and syncs across devices.
       saveCompletedJourney(entry).catch(() => {});
     }
-    set({ status: "idle", destination: null, mode: null, route: null });
+    set({ status: "idle", destination: null, mode: null, route: null, startedAt: null });
   },
 }));
 

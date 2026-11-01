@@ -43,7 +43,7 @@ function formatCountdown(totalSeconds: number) {
 }
 
 export function JourneyCard() {
-  const { status, destination, route, mode, endJourney, setStatus } = useJourneyStore();
+  const { status, destination, route, mode, startedAt, endJourney, setStatus } = useJourneyStore();
   const sosStatus = useSosStore((s) => s.status);
   const fireSos = useSosStore((s) => s.fire);
   const triggeredAt = useSosStore((s) => s.triggeredAt);
@@ -68,15 +68,20 @@ export function JourneyCard() {
   const deviationAlertedRef = React.useRef(false);
   const abnormalStopAlertedRef = React.useRef(false);
 
+  // Derived from the journey's real start time (persisted in the global
+  // store), not reset per-mount — so navigating to another page and back
+  // during an active journey shows the correct remaining time instead of
+  // restarting the countdown from the full route duration.
   React.useEffect(() => {
-    if (status !== "active" || !route) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- synchronizing the countdown to a freshly started journey
-    setRemaining(route.durationSeconds);
-    const interval = setInterval(() => {
-      setRemaining((r) => (r > 0 ? r - 1 : 0));
-    }, 1000);
+    if (status !== "active" || !route || !startedAt) return;
+    const compute = () => {
+      const elapsed = Math.floor((Date.now() - new Date(startedAt).getTime()) / 1000);
+      setRemaining(Math.max(0, route.durationSeconds - elapsed));
+    };
+    compute();
+    const interval = setInterval(compute, 1000);
     return () => clearInterval(interval);
-  }, [status, route]);
+  }, [status, route, startedAt]);
 
   React.useEffect(() => {
     if (!route || status === "idle") {
